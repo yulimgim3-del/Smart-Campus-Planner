@@ -39,10 +39,14 @@
  *   20) 캘린더의 날짜 칸을 클릭하면 그 날의 상세 일정(마감일 할 일 + 근무 요일 아르바이트)을
  *       화면 아래쪽에 목록으로 보여주기
  *
- * 이번 단계(T9)에서 새로 추가한 기능:
+ * T9에서 만든 기능 (그대로 유지):
  *   21) 할 일을 추가할 때 메모(선택 입력)를 함께 남기기
  *   22) 메모가 길면 카드에서는 일부만 보여주고, "더보기"를 누르면 전체 메모를 볼 수 있게 하기
  *   23) 메모가 없는 기존 할 일 데이터도 오류 없이 그대로 표시하기
+ *
+ * 이번 단계(T10)에서 개선한 내용:
+ *   24) 주간 시간표에서 등록된 수업 칸을 클릭해도 삭제되지 않도록 수정하고,
+ *       칸 안의 작은 X 버튼을 눌렀을 때만 삭제되도록 변경 (실수로 삭제되는 문제 방지)
  */
 
 // 할 일 카드에서 메모를 기본으로 보여줄 최대 글자 수 (이보다 길면 "더보기"로 축약)
@@ -303,9 +307,25 @@ function renderSchedule() {
       if (classInfo) {
         cell.classList.add("schedule-cell-filled");
         cell.style.backgroundColor = classInfo.color;
-        cell.textContent = classInfo.subject;
-        cell.title = `${day}요일 ${period}교시 · ${classInfo.subject} (클릭하면 삭제)`;
-        cell.addEventListener("click", () => deleteScheduleItem(classInfo.id));
+        cell.title = `${day}요일 ${period}교시 · ${classInfo.subject}`;
+
+        const subjectLabel = document.createElement("span");
+        subjectLabel.className = "schedule-cell-subject";
+        subjectLabel.textContent = classInfo.subject;
+        cell.appendChild(subjectLabel);
+
+        // 삭제는 셀 클릭이 아니라, 셀 안의 작은 X 버튼을 눌렀을 때만 동작하도록 해서
+        // 실수로 셀을 클릭했다가 수업이 지워지는 일을 방지합니다.
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "schedule-cell-remove-btn";
+        removeBtn.textContent = "×";
+        removeBtn.setAttribute("aria-label", `${day}요일 ${period}교시 ${classInfo.subject} 삭제`);
+        removeBtn.addEventListener("click", (event) => {
+          event.stopPropagation(); // 셀 클릭 이벤트로 전파되지 않도록 막기
+          deleteScheduleItem(classInfo.id);
+        });
+        cell.appendChild(removeBtn);
       }
 
       scheduleGridEl.appendChild(cell);

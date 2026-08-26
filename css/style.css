@@ -102,6 +102,7 @@ body {
 }
 
 .schedule-cell {
+  position: relative;
   min-height: 34px;
   display: flex;
   align-items: center;
@@ -126,12 +127,35 @@ body {
 .schedule-cell-filled {
   color: #fff;
   font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
 }
 
-.schedule-cell-filled:hover {
-  opacity: 0.85;
+.schedule-cell-subject {
+  padding: 0 12px;
+}
+
+/* 수업이 등록된 셀 안의 삭제(X) 버튼: 평소에는 눈에 잘 안 띄게, 클릭했을 때만 삭제되도록 */
+.schedule-cell-remove-btn {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 15px;
+  height: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 11px;
+  line-height: 1;
+  color: #fff;
+  background-color: rgba(0, 0, 0, 0.25);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.schedule-cell-remove-btn:hover {
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 /* ===== 마감 임박 학과 일정 요약 ===== */

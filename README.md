@@ -100,6 +100,6 @@ Smart Campus Planner/
 
 ## 🌐 GitHub Pages 실행 링크
 
-> 아래 링크를 통해 별도 설치 없이 바로 웹에서 앱을 사용해 볼 수 있습니다. (배포 후 링크를 채워주세요.)
+> 아래 링크를 통해 별도 설치 없이 바로 웹에서 앱을 사용해 볼 수 있습니다.
 
-🔗 **실행 링크**: `여기에 GitHub Pages 배포 URL을 입력해주세요 (예: https://사용자이름.github.io/저장소이름/)`
+🔗 **실행 링크**: [https://yulimgim3-del.github.io/Smart-Campus-Planner/](https://yulimgim3-del.github.io/Smart-Campus-Planner/)

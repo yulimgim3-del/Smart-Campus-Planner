@@ -27,8 +27,13 @@
  *   15) 과목마다 사용자가 직접 색상을 지정해서 시간표에서 구분하기
  *   16) 시간표 아래에 마감이 3일 이내로 임박한 학과 일정(할 일)을 요약 카드로 보여주기
  *
- * 이번 단계(T6)에서 새로 추가한 기능:
+ * T6에서 만든 기능 (그대로 유지):
  *   17) 카테고리가 '아르바이트'일 때는 마감일 대신 근무 요일(월~일, 중복 선택 가능)을 지정하기
+ *
+ * 이번 단계(T7)에서 새로 추가한 기능:
+ *   18) 월간 캘린더 뷰에서 마감일이 있는 학과/개인 할 일과, 아르바이트 근무 요일에 해당하는
+ *       날짜를 한 화면에서 함께 확인하기
+ *   19) 이전 달 / 다음 달 버튼으로 캘린더를 넘겨가며 확인하기
  */
 
 // 카테고리가 '학과'일 때만 선택 가능한 유형 목록
@@ -36,6 +41,9 @@ const SCHOOL_TYPES = ["과제", "시험", "발표", "팀플", "기타"];
 
 // 카테고리가 '아르바이트'일 때 선택 가능한 근무 요일 목록 (월~일)
 const WORK_DAYS = ["월", "화", "수", "목", "금", "토", "일"];
+
+// 캘린더 요일 헤더에 사용하는 일~토 순서 목록 (Date.getDay()의 0~6 순서와 동일)
+const CALENDAR_WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
 // 시간표에서 사용하는 요일 목록 (월~금)
 const SCHEDULE_DAYS = ["월", "화", "수", "목", "금"];
@@ -148,6 +156,17 @@ const scheduleEmptyStateEl = document.getElementById("schedule-empty-state");
 // 마감 임박 학과 일정 요약 관련 화면 요소 가져오기
 const upcomingListEl = document.getElementById("upcoming-list");
 const upcomingEmptyStateEl = document.getElementById("upcoming-empty-state");
+
+// 월간 캘린더 관련 화면 요소 가져오기
+const calendarTitleEl = document.getElementById("calendar-title");
+const calendarGridEl = document.getElementById("calendar-grid");
+const calendarPrevBtn = document.getElementById("calendar-prev-btn");
+const calendarNextBtn = document.getElementById("calendar-next-btn");
+
+// 현재 캘린더에 보여주고 있는 연/월 (0-indexed 월: 0=1월 ... 11=12월)
+const now = new Date();
+let calendarYear = now.getFullYear();
+let calendarMonth = now.getMonth();
 
 /**
  * 카테고리 선택값에 따라 '유형' 선택 필드를 보이거나 숨깁니다.
@@ -347,6 +366,94 @@ function renderUpcoming() {
 }
 
 /**
+ * YYYY-MM-DD 형식의 날짜 문자열을 만듭니다. (월/일이 한 자리 숫자면 앞에 0을 붙입니다)
+ * @param {number} year 연도
+ * @param {number} month 0-indexed 월 (0=1월 ... 11=12월)
+ * @param {number} day 일
+ * @returns {string} YYYY-MM-DD 형식 문자열
+ */
+function formatDateKey(year, month, day) {
+  const mm = String(month + 1).padStart(2, "0");
+  const dd = String(day).padStart(2, "0");
+  return `${year}-${mm}-${dd}`;
+}
+
+/**
+ * 현재 캘린더가 보여주고 있는 연/월(calendarYear, calendarMonth)을 기준으로
+ * 월간 캘린더 그리드(<div id="calendar-grid">)를 새로 그립니다.
+ * - 마감일이 있는 학과/개인 할 일은 해당 마감일 날짜 칸에 표시합니다.
+ * - 아르바이트 근무 요일이 지정된 할 일은 그 요일에 해당하는 이번 달의 모든 날짜 칸에 표시합니다.
+ */
+function renderCalendar() {
+  calendarTitleEl.textContent = `${calendarYear}년 ${calendarMonth + 1}월`;
+  calendarGridEl.innerHTML = "";
+
+  // 요일 헤더 (일~토) 그리기
+  CALENDAR_WEEKDAY_LABELS.forEach((label) => {
+    const weekdayEl = document.createElement("div");
+    weekdayEl.className = "calendar-weekday";
+    weekdayEl.textContent = label;
+    calendarGridEl.appendChild(weekdayEl);
+  });
+
+  const firstDayOfMonth = new Date(calendarYear, calendarMonth, 1);
+  const startWeekday = firstDayOfMonth.getDay(); // 0(일) ~ 6(토)
+  const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+
+  const todayDateObj = new Date();
+  const isCurrentMonth =
+    todayDateObj.getFullYear() === calendarYear && todayDateObj.getMonth() === calendarMonth;
+  const todayDate = todayDateObj.getDate();
+
+  // 1일이 시작되기 전 빈 칸 채우기
+  for (let i = 0; i < startWeekday; i += 1) {
+    const emptyCell = document.createElement("div");
+    emptyCell.className = "calendar-day-cell calendar-day-empty";
+    calendarGridEl.appendChild(emptyCell);
+  }
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const dateKey = formatDateKey(calendarYear, calendarMonth, day);
+    const weekdayLabel = WORK_DAYS[(new Date(calendarYear, calendarMonth, day).getDay() + 6) % 7];
+
+    const dayCell = document.createElement("div");
+    dayCell.className = "calendar-day-cell";
+    if (isCurrentMonth && day === todayDate) {
+      dayCell.classList.add("calendar-day-today");
+    }
+
+    const dayNumberEl = document.createElement("span");
+    dayNumberEl.className = "calendar-day-number";
+    dayNumberEl.textContent = String(day);
+    dayCell.appendChild(dayNumberEl);
+
+    // 마감일이 이 날짜인 학과/개인 할 일 표시
+    todos
+      .filter((todo) => todo.dueDate === dateKey)
+      .forEach((todo) => {
+        const eventEl = document.createElement("span");
+        eventEl.className = "calendar-event";
+        eventEl.textContent = todo.title;
+        eventEl.title = todo.title;
+        dayCell.appendChild(eventEl);
+      });
+
+    // 이 날짜의 요일에 근무하는 아르바이트 할 일 표시
+    todos
+      .filter((todo) => todo.category === "아르바이트" && (todo.workDays || []).includes(weekdayLabel))
+      .forEach((todo) => {
+        const eventEl = document.createElement("span");
+        eventEl.className = "calendar-event calendar-event-workday";
+        eventEl.textContent = todo.title;
+        eventEl.title = todo.title;
+        dayCell.appendChild(eventEl);
+      });
+
+    calendarGridEl.appendChild(dayCell);
+  }
+}
+
+/**
  * 할 일 목록(todos 배열)을 기준으로 화면(<ul id="todo-list">)을 새로 그립니다.
  * 화면을 다시 그릴 때마다 현재 목록을 브라우저 저장소에도 함께 저장하여,
  * 새로고침하거나 다시 접속해도 데이터가 유지되도록 합니다.
@@ -370,6 +477,7 @@ function renderTodoList() {
 
   renderProgress();
   renderUpcoming();
+  renderCalendar();
 }
 
 /**
@@ -579,6 +687,27 @@ scheduleForm.addEventListener("submit", (event) => {
   scheduleSubjectInput.focus();
 });
 
+// 이전 달 버튼 클릭 시 캘린더를 한 달 전으로 이동
+calendarPrevBtn.addEventListener("click", () => {
+  calendarMonth -= 1;
+  if (calendarMonth < 0) {
+    calendarMonth = 11;
+    calendarYear -= 1;
+  }
+  renderCalendar();
+});
+
+// 다음 달 버튼 클릭 시 캘린더를 한 달 뒤로 이동
+calendarNextBtn.addEventListener("click", () => {
+  calendarMonth += 1;
+  if (calendarMonth > 11) {
+    calendarMonth = 0;
+    calendarYear += 1;
+  }
+  renderCalendar();
+});
+
 // 페이지가 처음 열렸을 때 화면 초기 상태 그리기 (저장된 데이터가 있으면 그대로 복원)
 renderTodoList();
 renderSchedule();
+renderCalendar();

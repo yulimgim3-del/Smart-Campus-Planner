@@ -438,6 +438,101 @@ body {
   color: #b98400;
 }
 
+/* ===== 월간 캘린더 뷰 ===== */
+.calendar-section {
+  margin-bottom: 20px;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.calendar-title {
+  margin: 0;
+}
+
+.calendar-nav-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #d9dce3;
+  border-radius: 8px;
+  background-color: #fff;
+  color: #2f4bff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.calendar-nav-btn:hover {
+  background-color: #f0f3ff;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.calendar-weekday {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #7a7f8c;
+  padding: 4px 0;
+}
+
+.calendar-day-cell {
+  min-height: 64px;
+  padding: 4px;
+  border-radius: 8px;
+  background-color: #f8f9fc;
+  border: 1px solid #eceef4;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.calendar-day-cell.calendar-day-empty {
+  background-color: transparent;
+  border: none;
+}
+
+.calendar-day-cell.calendar-day-today {
+  border-color: #2f4bff;
+  background-color: #f0f3ff;
+}
+
+.calendar-day-number {
+  font-size: 11px;
+  font-weight: 600;
+  color: #555;
+}
+
+.calendar-day-today .calendar-day-number {
+  color: #2f4bff;
+}
+
+.calendar-event {
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background-color: #e4ecff;
+  color: #2f4bff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.calendar-event-workday {
+  background-color: #fff3d6;
+  color: #b98400;
+}
+
 /* 완료된 할 일 스타일 */
 .todo-item.completed {
   opacity: 0.6;

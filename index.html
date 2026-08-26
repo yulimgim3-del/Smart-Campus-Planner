@@ -88,6 +88,15 @@
         <button type="button" id="calendar-next-btn" class="calendar-nav-btn" aria-label="다음 달">›</button>
       </div>
       <div id="calendar-grid" class="calendar-grid"></div>
+
+      <!-- 캘린더에서 날짜를 클릭하면 그 날의 상세 일정을 보여주는 영역 -->
+      <div class="calendar-detail">
+        <h3 id="calendar-detail-title" class="calendar-detail-title">날짜를 선택하면 상세 일정을 볼 수 있어요</h3>
+        <ul id="calendar-detail-list" class="calendar-detail-list"></ul>
+        <p id="calendar-detail-empty-state" class="empty-state hidden">
+          선택한 날짜에 등록된 일정이 없습니다.
+        </p>
+      </div>
     </section>
 
     <!-- 할 일 추가 영역 (T2: 제목 + 카테고리 + 중요도 + 마감일) -->

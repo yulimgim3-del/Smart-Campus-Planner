@@ -30,10 +30,14 @@
  * T6에서 만든 기능 (그대로 유지):
  *   17) 카테고리가 '아르바이트'일 때는 마감일 대신 근무 요일(월~일, 중복 선택 가능)을 지정하기
  *
- * 이번 단계(T7)에서 새로 추가한 기능:
+ * T7에서 만든 기능 (그대로 유지):
  *   18) 월간 캘린더 뷰에서 마감일이 있는 학과/개인 할 일과, 아르바이트 근무 요일에 해당하는
  *       날짜를 한 화면에서 함께 확인하기
  *   19) 이전 달 / 다음 달 버튼으로 캘린더를 넘겨가며 확인하기
+ *
+ * 이번 단계(T8)에서 새로 추가한 기능:
+ *   20) 캘린더의 날짜 칸을 클릭하면 그 날의 상세 일정(마감일 할 일 + 근무 요일 아르바이트)을
+ *       화면 아래쪽에 목록으로 보여주기
  */
 
 // 카테고리가 '학과'일 때만 선택 가능한 유형 목록
@@ -162,11 +166,17 @@ const calendarTitleEl = document.getElementById("calendar-title");
 const calendarGridEl = document.getElementById("calendar-grid");
 const calendarPrevBtn = document.getElementById("calendar-prev-btn");
 const calendarNextBtn = document.getElementById("calendar-next-btn");
+const calendarDetailTitleEl = document.getElementById("calendar-detail-title");
+const calendarDetailListEl = document.getElementById("calendar-detail-list");
+const calendarDetailEmptyStateEl = document.getElementById("calendar-detail-empty-state");
 
 // 현재 캘린더에 보여주고 있는 연/월 (0-indexed 월: 0=1월 ... 11=12월)
 const now = new Date();
 let calendarYear = now.getFullYear();
 let calendarMonth = now.getMonth();
+
+// 캘린더에서 사용자가 클릭해서 선택한 날짜 (YYYY-MM-DD 문자열). 아직 선택하지 않았으면 null.
+let selectedCalendarDate = null;
 
 /**
  * 카테고리 선택값에 따라 '유형' 선택 필드를 보이거나 숨깁니다.
@@ -379,10 +389,32 @@ function formatDateKey(year, month, day) {
 }
 
 /**
+ * 특정 날짜(dateKey)에 해당하는 일정(할 일) 목록을 찾아 반환합니다.
+ * - 마감일이 이 날짜와 정확히 일치하는 학과/개인 할 일
+ * - 이 날짜의 요일에 근무하는 아르바이트 할 일
+ * @param {string} dateKey YYYY-MM-DD 형식의 날짜 문자열
+ * @returns {Array<{todo: object, isWorkday: boolean}>} 해당 날짜의 일정 목록
+ */
+function getEventsForDate(dateKey) {
+  const weekdayLabel = WORK_DAYS[(new Date(dateKey + "T00:00:00").getDay() + 6) % 7];
+
+  const dueDateEvents = todos
+    .filter((todo) => todo.dueDate === dateKey)
+    .map((todo) => ({ todo, isWorkday: false }));
+
+  const workdayEvents = todos
+    .filter((todo) => todo.category === "아르바이트" && (todo.workDays || []).includes(weekdayLabel))
+    .map((todo) => ({ todo, isWorkday: true }));
+
+  return [...dueDateEvents, ...workdayEvents];
+}
+
+/**
  * 현재 캘린더가 보여주고 있는 연/월(calendarYear, calendarMonth)을 기준으로
  * 월간 캘린더 그리드(<div id="calendar-grid">)를 새로 그립니다.
  * - 마감일이 있는 학과/개인 할 일은 해당 마감일 날짜 칸에 표시합니다.
  * - 아르바이트 근무 요일이 지정된 할 일은 그 요일에 해당하는 이번 달의 모든 날짜 칸에 표시합니다.
+ * - 날짜 칸을 클릭하면 그 날의 상세 일정을 화면 아래쪽에 보여줍니다.
  */
 function renderCalendar() {
   calendarTitleEl.textContent = `${calendarYear}년 ${calendarMonth + 1}월`;
@@ -414,12 +446,15 @@ function renderCalendar() {
 
   for (let day = 1; day <= daysInMonth; day += 1) {
     const dateKey = formatDateKey(calendarYear, calendarMonth, day);
-    const weekdayLabel = WORK_DAYS[(new Date(calendarYear, calendarMonth, day).getDay() + 6) % 7];
 
     const dayCell = document.createElement("div");
     dayCell.className = "calendar-day-cell";
+    dayCell.dataset.date = dateKey;
     if (isCurrentMonth && day === todayDate) {
       dayCell.classList.add("calendar-day-today");
+    }
+    if (dateKey === selectedCalendarDate) {
+      dayCell.classList.add("calendar-day-selected");
     }
 
     const dayNumberEl = document.createElement("span");
@@ -427,30 +462,73 @@ function renderCalendar() {
     dayNumberEl.textContent = String(day);
     dayCell.appendChild(dayNumberEl);
 
-    // 마감일이 이 날짜인 학과/개인 할 일 표시
-    todos
-      .filter((todo) => todo.dueDate === dateKey)
-      .forEach((todo) => {
-        const eventEl = document.createElement("span");
-        eventEl.className = "calendar-event";
-        eventEl.textContent = todo.title;
-        eventEl.title = todo.title;
-        dayCell.appendChild(eventEl);
-      });
+    // 이 날짜의 일정(마감일 할 일 + 근무 요일 할 일)을 모아 표시
+    getEventsForDate(dateKey).forEach(({ todo, isWorkday }) => {
+      const eventEl = document.createElement("span");
+      eventEl.className = "calendar-event" + (isWorkday ? " calendar-event-workday" : "");
+      eventEl.textContent = todo.title;
+      eventEl.title = todo.title;
+      dayCell.appendChild(eventEl);
+    });
 
-    // 이 날짜의 요일에 근무하는 아르바이트 할 일 표시
-    todos
-      .filter((todo) => todo.category === "아르바이트" && (todo.workDays || []).includes(weekdayLabel))
-      .forEach((todo) => {
-        const eventEl = document.createElement("span");
-        eventEl.className = "calendar-event calendar-event-workday";
-        eventEl.textContent = todo.title;
-        eventEl.title = todo.title;
-        dayCell.appendChild(eventEl);
-      });
+    // 날짜 칸을 클릭하면 그 날짜를 선택하고 상세 일정을 보여줍니다.
+    dayCell.addEventListener("click", () => {
+      selectedCalendarDate = dateKey;
+      renderCalendar();
+    });
 
     calendarGridEl.appendChild(dayCell);
   }
+
+  renderCalendarDetail();
+}
+
+/**
+ * 현재 선택된 날짜(selectedCalendarDate)의 상세 일정을 화면(<ul id="calendar-detail-list">)에 보여줍니다.
+ * 아직 선택한 날짜가 없으면 안내 문구만 보여줍니다.
+ */
+function renderCalendarDetail() {
+  calendarDetailListEl.innerHTML = "";
+
+  if (!selectedCalendarDate) {
+    calendarDetailTitleEl.textContent = "날짜를 선택하면 상세 일정을 볼 수 있어요";
+    calendarDetailEmptyStateEl.classList.add("hidden");
+    return;
+  }
+
+  const [year, month, day] = selectedCalendarDate.split("-").map(Number);
+  calendarDetailTitleEl.textContent = `${year}년 ${month}월 ${day}일 일정`;
+
+  const events = getEventsForDate(selectedCalendarDate);
+
+  if (events.length === 0) {
+    calendarDetailEmptyStateEl.classList.remove("hidden");
+    return;
+  }
+
+  calendarDetailEmptyStateEl.classList.add("hidden");
+
+  events.forEach(({ todo, isWorkday }) => {
+    const item = document.createElement("li");
+    item.className = "calendar-detail-item";
+
+    const titleEl = document.createElement("span");
+    titleEl.className = "calendar-detail-item-title";
+    titleEl.textContent = (todo.type ? `[${todo.type}] ` : "") + todo.title;
+
+    const badgeEl = document.createElement("span");
+    if (isWorkday) {
+      badgeEl.className = "badge badge-workdays";
+      badgeEl.textContent = "아르바이트";
+    } else {
+      badgeEl.className = "badge badge-category";
+      badgeEl.textContent = todo.category;
+    }
+
+    item.appendChild(titleEl);
+    item.appendChild(badgeEl);
+    calendarDetailListEl.appendChild(item);
+  });
 }
 
 /**

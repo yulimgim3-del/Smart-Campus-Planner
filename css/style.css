@@ -15,7 +15,7 @@ body {
 
 .app {
   width: 100%;
-  max-width: 520px;
+  max-width: 640px;
   background-color: #ffffff;
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
@@ -38,6 +38,137 @@ body {
   margin: 0;
   font-size: 13px;
   color: #7a7f8c;
+}
+
+/* ===== 섹션 공통 제목 ===== */
+.section-title {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+}
+
+/* ===== 주간 시간표 ===== */
+.schedule-section {
+  margin-bottom: 20px;
+}
+
+.schedule-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.schedule-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.schedule-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.schedule-form-field-subject {
+  flex: 1;
+  min-width: 120px;
+}
+
+.schedule-form-field-color {
+  min-width: 60px;
+}
+
+.schedule-color-input {
+  padding: 2px;
+  width: 44px;
+  height: 34px;
+  border: 1px solid #d9dce3;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: #fff;
+}
+
+.schedule-grid {
+  display: grid;
+  grid-template-columns: 52px repeat(5, 1fr);
+  gap: 4px;
+}
+
+.schedule-grid.hidden {
+  display: none;
+}
+
+.schedule-cell {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 2px;
+  font-size: 11px;
+  text-align: center;
+  border-radius: 6px;
+  background-color: #f8f9fc;
+  color: #444;
+  word-break: break-all;
+  line-height: 1.2;
+}
+
+.schedule-head {
+  background-color: transparent;
+  font-weight: 600;
+  color: #7a7f8c;
+  font-size: 12px;
+}
+
+.schedule-cell-filled {
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.schedule-cell-filled:hover {
+  opacity: 0.85;
+}
+
+/* ===== 마감 임박 학과 일정 요약 ===== */
+.upcoming-section {
+  margin-bottom: 20px;
+}
+
+.upcoming-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.upcoming-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background-color: #f8f9fc;
+  border: 1px solid #eceef4;
+}
+
+.upcoming-card-title {
+  font-size: 13px;
+  color: #333;
+  word-break: break-all;
+}
+
+.upcoming-card-urgent {
+  background-color: #fff5f5;
+  border-color: #f3c1cb;
+}
+
+.upcoming-card-overdue {
+  background-color: #f4f5f8;
 }
 
 /* ===== 할 일 추가 폼 ===== */
@@ -248,6 +379,34 @@ body {
 .badge-due-date {
   background-color: #eceef4;
   color: #555;
+}
+
+.badge-type {
+  background-color: #f1e9ff;
+  color: #7c3aed;
+}
+
+.badge-dday-normal {
+  background-color: #e4ecff;
+  color: #2f4bff;
+  font-weight: 600;
+}
+
+.badge-dday-urgent {
+  background-color: #ffe3e3;
+  color: #d9364f;
+  font-weight: 700;
+}
+
+.badge-dday-overdue {
+  background-color: #eceef4;
+  color: #9aa0ac;
+  font-weight: 600;
+}
+
+/* 카테고리가 '학과'가 아닐 때 유형 선택 필드를 숨김 */
+.todo-form-field.hidden {
+  display: none;
 }
 
 /* 완료된 할 일 스타일 */

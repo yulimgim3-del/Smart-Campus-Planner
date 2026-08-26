@@ -13,6 +13,73 @@
       <p class="app-subtitle">학과 · 아르바이트 · 개인 할 일을 한곳에서 관리하세요</p>
     </header>
 
+    <!-- 주간 시간표 영역 (T5: 요일 x 교시 그리드, 과목별 색상 구분) -->
+    <section class="schedule-section">
+      <h2 class="section-title">📅 주간 시간표</h2>
+
+      <form id="schedule-form" class="schedule-form">
+        <div class="schedule-form-row">
+          <label class="schedule-form-field">
+            <span class="field-label">요일</span>
+            <select id="schedule-day-select" class="todo-select">
+              <option value="월">월</option>
+              <option value="화">화</option>
+              <option value="수">수</option>
+              <option value="목">목</option>
+              <option value="금">금</option>
+            </select>
+          </label>
+
+          <label class="schedule-form-field">
+            <span class="field-label">교시</span>
+            <select id="schedule-period-select" class="todo-select">
+              <option value="1">1교시</option>
+              <option value="2">2교시</option>
+              <option value="3">3교시</option>
+              <option value="4">4교시</option>
+              <option value="5">5교시</option>
+              <option value="6">6교시</option>
+              <option value="7">7교시</option>
+              <option value="8">8교시</option>
+              <option value="9">9교시</option>
+            </select>
+          </label>
+
+          <label class="schedule-form-field schedule-form-field-subject">
+            <span class="field-label">과목명</span>
+            <input
+              type="text"
+              id="schedule-subject-input"
+              class="todo-title-input"
+              placeholder="예: 자료구조"
+              autocomplete="off"
+            />
+          </label>
+
+          <label class="schedule-form-field schedule-form-field-color">
+            <span class="field-label">색상</span>
+            <input type="color" id="schedule-color-input" class="schedule-color-input" value="#2f4bff" />
+          </label>
+        </div>
+
+        <button type="submit" class="add-btn">시간표 등록</button>
+      </form>
+
+      <div id="schedule-grid" class="schedule-grid"></div>
+      <p id="schedule-empty-state" class="empty-state">
+        아직 등록된 수업이 없습니다. 위에서 시간표를 추가해 보세요!
+      </p>
+    </section>
+
+    <!-- 마감 임박 학과 일정 요약 영역 (T5) -->
+    <section class="upcoming-section">
+      <h2 class="section-title">⏰ 마감 임박 학과 일정</h2>
+      <div id="upcoming-list" class="upcoming-list"></div>
+      <p id="upcoming-empty-state" class="empty-state">
+        3일 이내로 마감인 학과 일정이 없습니다.
+      </p>
+    </section>
+
     <!-- 할 일 추가 영역 (T2: 제목 + 카테고리 + 중요도 + 마감일) -->
     <section class="add-todo-section">
       <form id="todo-form" class="todo-form">
@@ -31,6 +98,18 @@
               <option value="학과">학과</option>
               <option value="아르바이트">아르바이트</option>
               <option value="개인">개인</option>
+            </select>
+          </label>
+
+          <!-- 카테고리가 '학과'일 때만 보이는 유형(과제/시험/발표/팀플/기타) 선택 필드 -->
+          <label class="todo-form-field" id="todo-type-field">
+            <span class="field-label">유형</span>
+            <select id="todo-type-select" class="todo-select">
+              <option value="과제">과제</option>
+              <option value="시험">시험</option>
+              <option value="발표">발표</option>
+              <option value="팀플">팀플</option>
+              <option value="기타">기타</option>
             </select>
           </label>
 

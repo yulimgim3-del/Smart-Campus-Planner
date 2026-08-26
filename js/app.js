@@ -35,10 +35,22 @@
  *       날짜를 한 화면에서 함께 확인하기
  *   19) 이전 달 / 다음 달 버튼으로 캘린더를 넘겨가며 확인하기
  *
- * 이번 단계(T8)에서 새로 추가한 기능:
+ * T8에서 만든 기능 (그대로 유지):
  *   20) 캘린더의 날짜 칸을 클릭하면 그 날의 상세 일정(마감일 할 일 + 근무 요일 아르바이트)을
  *       화면 아래쪽에 목록으로 보여주기
+ *
+ * 이번 단계(T9)에서 새로 추가한 기능:
+ *   21) 할 일을 추가할 때 메모(선택 입력)를 함께 남기기
+ *   22) 메모가 길면 카드에서는 일부만 보여주고, "더보기"를 누르면 전체 메모를 볼 수 있게 하기
+ *   23) 메모가 없는 기존 할 일 데이터도 오류 없이 그대로 표시하기
  */
+
+// 할 일 카드에서 메모를 기본으로 보여줄 최대 글자 수 (이보다 길면 "더보기"로 축약)
+const MEMO_PREVIEW_LENGTH = 40;
+
+// 사용자가 "더보기"를 눌러 전체 메모를 펼쳐본 할 일 id를 기억하는 집합.
+// 화면을 다시 그릴 때(renderTodoList)도 펼친 상태가 유지되도록 사용합니다. (새로고침 시에는 초기화됩니다)
+const expandedMemoTodoIds = new Set();
 
 // 카테고리가 '학과'일 때만 선택 가능한 유형 목록
 const SCHOOL_TYPES = ["과제", "시험", "발표", "팀플", "기타"];
@@ -143,6 +155,7 @@ const todoDueDateField = document.getElementById("todo-due-date-field");
 const todoDueDateInput = document.getElementById("todo-due-date-input");
 const todoWorkdaysField = document.getElementById("todo-workdays-field");
 const todoWorkdayCheckboxes = document.querySelectorAll(".todo-workday-checkbox");
+const todoMemoInput = document.getElementById("todo-memo-input");
 const todoListEl = document.getElementById("todo-list");
 const emptyStateEl = document.getElementById("empty-state");
 const progressTextEl = document.getElementById("progress-text");
@@ -559,6 +572,59 @@ function renderTodoList() {
 }
 
 /**
+ * 할 일의 메모를 보여주는 영역을 만들어 반환합니다.
+ * 메모가 미리보기 길이(MEMO_PREVIEW_LENGTH)보다 길면 기본적으로 일부만 보여주고,
+ * "더보기" 버튼을 눌러 전체 메모를 펼쳐볼 수 있게 합니다.
+ * @param {object} todo 할 일 데이터 (memo 필드를 사용)
+ * @returns {HTMLElement} 메모 영역 요소
+ */
+function createMemoElement(todo) {
+  const memoWrap = document.createElement("div");
+  memoWrap.className = "todo-item-memo";
+
+  const memoLabel = document.createElement("span");
+  memoLabel.className = "todo-item-memo-label";
+  memoLabel.textContent = "메모";
+  memoWrap.appendChild(memoLabel);
+
+  const memoTextEl = document.createElement("p");
+  memoTextEl.className = "todo-item-memo-text";
+
+  const isLongMemo = todo.memo.length > MEMO_PREVIEW_LENGTH;
+  const isExpanded = expandedMemoTodoIds.has(todo.id);
+
+  const applyMemoText = () => {
+    if (isLongMemo && !expandedMemoTodoIds.has(todo.id)) {
+      memoTextEl.textContent = todo.memo.slice(0, MEMO_PREVIEW_LENGTH) + "…";
+    } else {
+      memoTextEl.textContent = todo.memo;
+    }
+  };
+  applyMemoText();
+  memoWrap.appendChild(memoTextEl);
+
+  // 메모가 미리보기 길이보다 길 때만 "더보기/접기" 버튼을 보여줍니다.
+  if (isLongMemo) {
+    const toggleBtn = document.createElement("button");
+    toggleBtn.type = "button";
+    toggleBtn.className = "todo-item-memo-toggle-btn";
+    toggleBtn.textContent = isExpanded ? "접기" : "더보기";
+    toggleBtn.addEventListener("click", () => {
+      if (expandedMemoTodoIds.has(todo.id)) {
+        expandedMemoTodoIds.delete(todo.id);
+      } else {
+        expandedMemoTodoIds.add(todo.id);
+      }
+      applyMemoText();
+      toggleBtn.textContent = expandedMemoTodoIds.has(todo.id) ? "접기" : "더보기";
+    });
+    memoWrap.appendChild(toggleBtn);
+  }
+
+  return memoWrap;
+}
+
+/**
  * 할 일 하나(todo)에 해당하는 <li> 요소를 만들어 반환합니다.
  * @param {object} todo 할 일 데이터
  */
@@ -632,6 +698,12 @@ function createTodoItemElement(todo) {
   contentWrap.appendChild(titleSpan);
   contentWrap.appendChild(metaWrap);
 
+  // 메모가 있는 할 일이면 메모 영역을 추가로 보여줍니다.
+  // 기존에 저장된 할 일에 memo 필드가 없는 경우에도 todo.memo가 undefined이므로 아래 조건에서 자연스럽게 걸러집니다.
+  if (todo.memo) {
+    contentWrap.appendChild(createMemoElement(todo));
+  }
+
   mainWrap.appendChild(checkbox);
   mainWrap.appendChild(contentWrap);
 
@@ -669,12 +741,16 @@ function renderProgress() {
  * @param {string} params.priority 중요도 (상 / 중 / 하)
  * @param {string} params.dueDate 마감일 (YYYY-MM-DD 형식 문자열, 카테고리가 '아르바이트'가 아닐 때만 의미 있음)
  * @param {string[]} params.workDays 근무 요일 목록 (카테고리가 '아르바이트'일 때만 의미 있음)
+ * @param {string} params.memo 메모 (선택 입력, 비어있어도 할 일 등록에는 문제 없음)
  */
-function addTodo({ title, category, type, priority, dueDate, workDays }) {
+function addTodo({ title, category, type, priority, dueDate, workDays, memo }) {
   const trimmedTitle = title.trim();
   if (trimmedTitle === "") {
     return; // 빈 값은 추가하지 않음
   }
+
+  // 메모는 선택 입력이므로 비어있어도 되고, 앞뒤 공백만 정리해서 저장합니다.
+  const trimmedMemo = (memo || "").trim();
 
   // 카테고리가 '학과'가 아니면 유형은 저장하지 않습니다.
   const isSchoolCategory = category === "학과";
@@ -695,6 +771,7 @@ function addTodo({ title, category, type, priority, dueDate, workDays }) {
     priority,
     dueDate: resolvedDueDate,
     workDays: resolvedWorkDays,
+    memo: trimmedMemo,
     completed: false,
   };
 
@@ -738,11 +815,13 @@ todoForm.addEventListener("submit", (event) => {
     priority: todoPrioritySelect.value,
     dueDate: todoDueDateInput.value,
     workDays: checkedWorkDays,
+    memo: todoMemoInput.value,
   });
 
   // 입력창 초기화 (카테고리/중요도는 마지막 선택값을 유지해 연속 입력을 편하게 함)
   todoTitleInput.value = "";
   todoDueDateInput.value = "";
+  todoMemoInput.value = "";
   todoWorkdayCheckboxes.forEach((checkbox) => {
     checkbox.checked = false;
   });

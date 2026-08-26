@@ -232,6 +232,26 @@ body {
   border-color: #2f4bff;
 }
 
+.todo-form-field-memo {
+  width: 100%;
+}
+
+.todo-memo-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  border: 1px solid #d9dce3;
+  border-radius: 8px;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.15s ease;
+}
+
+.todo-memo-input:focus {
+  border-color: #2f4bff;
+}
+
 .add-btn {
   padding: 10px 18px;
   font-size: 14px;
@@ -584,6 +604,45 @@ body {
 
 .calendar-detail-item-title {
   word-break: break-all;
+}
+
+/* ===== 할 일 카드 메모 표시 ===== */
+.todo-item-memo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 2px;
+  padding: 8px 10px;
+  background-color: #f0f3ff;
+  border-radius: 8px;
+}
+
+.todo-item-memo-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #7a7f8c;
+}
+
+.todo-item-memo-text {
+  font-size: 13px;
+  color: #444;
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+
+.todo-item-memo-toggle-btn {
+  align-self: flex-start;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2f4bff;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.todo-item-memo-toggle-btn:hover {
+  text-decoration: underline;
 }
 
 /* 완료된 할 일 스타일 */

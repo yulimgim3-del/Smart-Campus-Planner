@@ -22,14 +22,20 @@
  *   12) 카테고리가 '학과'일 때만 유형(과제/시험/발표/팀플/기타)을 지정하기
  *   13) 마감일을 기준으로 D-Day(D-7, D-3, D-Day, 지남 등)를 계산해서 뱃지로 보여주기
  *
- * 이번 단계(T5)에서 새로 추가한 기능:
+ * T5에서 만든 기능 (그대로 유지):
  *   14) 요일(월~금) x 교시(1~9교시) 기반 주간 시간표를 등록/삭제하기
  *   15) 과목마다 사용자가 직접 색상을 지정해서 시간표에서 구분하기
  *   16) 시간표 아래에 마감이 3일 이내로 임박한 학과 일정(할 일)을 요약 카드로 보여주기
+ *
+ * 이번 단계(T6)에서 새로 추가한 기능:
+ *   17) 카테고리가 '아르바이트'일 때는 마감일 대신 근무 요일(월~일, 중복 선택 가능)을 지정하기
  */
 
 // 카테고리가 '학과'일 때만 선택 가능한 유형 목록
 const SCHOOL_TYPES = ["과제", "시험", "발표", "팀플", "기타"];
+
+// 카테고리가 '아르바이트'일 때 선택 가능한 근무 요일 목록 (월~일)
+const WORK_DAYS = ["월", "화", "수", "목", "금", "토", "일"];
 
 // 시간표에서 사용하는 요일 목록 (월~금)
 const SCHEDULE_DAYS = ["월", "화", "수", "목", "금"];
@@ -121,7 +127,10 @@ const todoCategorySelect = document.getElementById("todo-category-select");
 const todoTypeField = document.getElementById("todo-type-field");
 const todoTypeSelect = document.getElementById("todo-type-select");
 const todoPrioritySelect = document.getElementById("todo-priority-select");
+const todoDueDateField = document.getElementById("todo-due-date-field");
 const todoDueDateInput = document.getElementById("todo-due-date-input");
+const todoWorkdaysField = document.getElementById("todo-workdays-field");
+const todoWorkdayCheckboxes = document.querySelectorAll(".todo-workday-checkbox");
 const todoListEl = document.getElementById("todo-list");
 const emptyStateEl = document.getElementById("empty-state");
 const progressTextEl = document.getElementById("progress-text");
@@ -149,11 +158,34 @@ function updateTypeFieldVisibility() {
   todoTypeField.classList.toggle("hidden", !isSchoolCategory);
 }
 
-// 카테고리를 바꿀 때마다 유형 필드의 표시 여부를 갱신합니다.
-todoCategorySelect.addEventListener("change", updateTypeFieldVisibility);
+/**
+ * 카테고리 선택값에 따라 '마감일' 필드와 '근무 요일' 필드를 서로 바꿔가며 보여줍니다.
+ * 카테고리가 '아르바이트'일 때는 마감일 대신 근무 요일(월~일, 중복 선택 가능)을 지정합니다.
+ */
+function updateDueDateOrWorkdaysVisibility() {
+  const isPartTimeCategory = todoCategorySelect.value === "아르바이트";
+  todoDueDateField.classList.toggle("hidden", isPartTimeCategory);
+  todoWorkdaysField.classList.toggle("hidden", !isPartTimeCategory);
 
-// 페이지가 처음 열렸을 때도 현재 선택된 카테고리 기준으로 유형 필드 표시 여부를 맞춰줍니다.
+  // 마감일 필드가 숨겨지면 입력값도 함께 초기화해, 다른 카테고리로 잘못 저장되지 않도록 합니다.
+  if (isPartTimeCategory) {
+    todoDueDateInput.value = "";
+  } else {
+    todoWorkdayCheckboxes.forEach((checkbox) => {
+      checkbox.checked = false;
+    });
+  }
+}
+
+// 카테고리를 바꿀 때마다 유형 필드 / 마감일-근무 요일 필드의 표시 여부를 갱신합니다.
+todoCategorySelect.addEventListener("change", () => {
+  updateTypeFieldVisibility();
+  updateDueDateOrWorkdaysVisibility();
+});
+
+// 페이지가 처음 열렸을 때도 현재 선택된 카테고리 기준으로 필드 표시 여부를 맞춰줍니다.
 updateTypeFieldVisibility();
+updateDueDateOrWorkdaysVisibility();
 
 /**
  * 마감일(YYYY-MM-DD)을 기준으로 오늘까지 남은 일수를 계산해 D-Day 정보를 반환합니다.
@@ -403,6 +435,14 @@ function createTodoItemElement(todo) {
     }
   }
 
+  // 카테고리가 '아르바이트'이고 근무 요일이 지정되어 있으면 근무 요일 뱃지를 보여줍니다.
+  if (todo.workDays && todo.workDays.length > 0) {
+    const workDaysBadge = document.createElement("span");
+    workDaysBadge.className = "badge badge-workdays";
+    workDaysBadge.textContent = "근무: " + todo.workDays.join("·");
+    metaWrap.appendChild(workDaysBadge);
+  }
+
   contentWrap.appendChild(titleSpan);
   contentWrap.appendChild(metaWrap);
 
@@ -441,9 +481,10 @@ function renderProgress() {
  * @param {string} params.category 카테고리 (학과 / 아르바이트 / 개인)
  * @param {string} params.type 유형 (과제 / 시험 / 발표 / 팀플 / 기타, 카테고리가 '학과'일 때만 의미 있음)
  * @param {string} params.priority 중요도 (상 / 중 / 하)
- * @param {string} params.dueDate 마감일 (YYYY-MM-DD 형식 문자열, 비어있을 수 있음)
+ * @param {string} params.dueDate 마감일 (YYYY-MM-DD 형식 문자열, 카테고리가 '아르바이트'가 아닐 때만 의미 있음)
+ * @param {string[]} params.workDays 근무 요일 목록 (카테고리가 '아르바이트'일 때만 의미 있음)
  */
-function addTodo({ title, category, type, priority, dueDate }) {
+function addTodo({ title, category, type, priority, dueDate, workDays }) {
   const trimmedTitle = title.trim();
   if (trimmedTitle === "") {
     return; // 빈 값은 추가하지 않음
@@ -453,13 +494,21 @@ function addTodo({ title, category, type, priority, dueDate }) {
   const isSchoolCategory = category === "학과";
   const resolvedType = isSchoolCategory && SCHOOL_TYPES.includes(type) ? type : "";
 
+  // 카테고리가 '아르바이트'일 때는 마감일 대신 근무 요일을 저장하고, 마감일은 저장하지 않습니다.
+  const isPartTimeCategory = category === "아르바이트";
+  const resolvedDueDate = isPartTimeCategory ? "" : dueDate || "";
+  const resolvedWorkDays = isPartTimeCategory
+    ? (workDays || []).filter((day) => WORK_DAYS.includes(day))
+    : [];
+
   const newTodo = {
     id: Date.now().toString() + Math.random().toString(16).slice(2), // 간단한 고유 id 생성
     title: trimmedTitle,
     category,
     type: resolvedType,
     priority,
-    dueDate: dueDate || "",
+    dueDate: resolvedDueDate,
+    workDays: resolvedWorkDays,
     completed: false,
   };
 
@@ -491,17 +540,26 @@ function toggleTodoCompleted(id) {
 todoForm.addEventListener("submit", (event) => {
   event.preventDefault(); // 페이지가 새로고침되는 기본 동작 막기
 
+  // 체크된 근무 요일 체크박스들의 값(월/화/.../일)만 모아 배열로 만듭니다.
+  const checkedWorkDays = Array.from(todoWorkdayCheckboxes)
+    .filter((checkbox) => checkbox.checked)
+    .map((checkbox) => checkbox.value);
+
   addTodo({
     title: todoTitleInput.value,
     category: todoCategorySelect.value,
     type: todoTypeSelect.value,
     priority: todoPrioritySelect.value,
     dueDate: todoDueDateInput.value,
+    workDays: checkedWorkDays,
   });
 
   // 입력창 초기화 (카테고리/중요도는 마지막 선택값을 유지해 연속 입력을 편하게 함)
   todoTitleInput.value = "";
   todoDueDateInput.value = "";
+  todoWorkdayCheckboxes.forEach((checkbox) => {
+    checkbox.checked = false;
+  });
   todoTitleInput.focus();
 });
 

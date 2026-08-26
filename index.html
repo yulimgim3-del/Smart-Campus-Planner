@@ -122,10 +122,39 @@
             </select>
           </label>
 
-          <label class="todo-form-field">
+          <!-- 카테고리가 '아르바이트'가 아닐 때(학과/개인)만 보이는 마감일 필드 -->
+          <label class="todo-form-field" id="todo-due-date-field">
             <span class="field-label">마감일</span>
             <input type="date" id="todo-due-date-input" class="todo-date-input" />
           </label>
+
+          <!-- 카테고리가 '아르바이트'일 때만 보이는 근무 요일 체크박스 필드 -->
+          <div class="todo-form-field todo-form-field-workdays" id="todo-workdays-field">
+            <span class="field-label">근무 요일</span>
+            <div class="workdays-checkbox-group">
+              <label class="workday-checkbox-label">
+                <input type="checkbox" class="todo-workday-checkbox" value="월" />월
+              </label>
+              <label class="workday-checkbox-label">
+                <input type="checkbox" class="todo-workday-checkbox" value="화" />화
+              </label>
+              <label class="workday-checkbox-label">
+                <input type="checkbox" class="todo-workday-checkbox" value="수" />수
+              </label>
+              <label class="workday-checkbox-label">
+                <input type="checkbox" class="todo-workday-checkbox" value="목" />목
+              </label>
+              <label class="workday-checkbox-label">
+                <input type="checkbox" class="todo-workday-checkbox" value="금" />금
+              </label>
+              <label class="workday-checkbox-label">
+                <input type="checkbox" class="todo-workday-checkbox" value="토" />토
+              </label>
+              <label class="workday-checkbox-label">
+                <input type="checkbox" class="todo-workday-checkbox" value="일" />일
+              </label>
+            </div>
+          </div>
         </div>
 
         <button type="submit" class="add-btn">추가</button>

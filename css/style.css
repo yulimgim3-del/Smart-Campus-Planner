@@ -409,6 +409,35 @@ body {
   display: none;
 }
 
+/* ===== 아르바이트 근무 요일 ===== */
+.todo-form-field-workdays {
+  flex: 1 1 100%;
+}
+
+.workdays-checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.workday-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #444;
+  background-color: #f8f9fc;
+  border: 1px solid #d9dce3;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.badge-workdays {
+  background-color: #fff3d6;
+  color: #b98400;
+}
+
 /* 완료된 할 일 스타일 */
 .todo-item.completed {
   opacity: 0.6;

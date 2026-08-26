@@ -1,3 +1,17 @@
+/* ===== 색상 변수 (Kitty Campus Planner 테마) ===== */
+:root {
+  /* 전체 테마 색상: 빨간색 */
+  --color-red: #e0304a;
+  --color-red-dark: #b81f34;
+  --color-red-light: #ffe0e6;
+  --color-red-soft: #fff0f3;
+
+  /* 캘린더 전용 색상: 헬로키티 의상 청색 */
+  --color-blue: #2f4bff;
+  --color-blue-light: #e4ecff;
+  --color-blue-soft: #f0f3ff;
+}
+
 /* ===== 기본 레이아웃 ===== */
 * {
   box-sizing: border-box;
@@ -6,19 +20,27 @@
 body {
   margin: 0;
   font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-  background-color: #f4f6fb;
   color: #222;
   display: flex;
   justify-content: center;
   padding: 32px 16px;
+  /* 페이지 배경: 헬로키티 배경 이미지 (css 폴더 기준 상대 경로) */
+  background-image: url("헬로키티 배경.jpg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-color: var(--color-red-soft); /* 이미지 로딩 전/실패 시 대비 배경색 */
+  min-height: 100vh;
 }
 
 .app {
   width: 100%;
   max-width: 640px;
+  /* Main Container는 흰색 유지 */
   background-color: #ffffff;
   border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
   padding: 28px 24px 32px;
 }
 
@@ -28,10 +50,24 @@ body {
   margin-bottom: 24px;
 }
 
+.app-header-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
 .app-header h1 {
   margin: 0 0 6px;
   font-size: 24px;
-  color: #2f4bff;
+  color: var(--color-red);
+}
+
+.app-header-kitty-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  margin-bottom: 6px;
 }
 
 .app-subtitle {
@@ -46,6 +82,16 @@ body {
   font-size: 15px;
   font-weight: 700;
   color: #333;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.section-title-icon-img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  vertical-align: middle;
 }
 
 /* ===== 주간 시간표 ===== */
@@ -187,8 +233,8 @@ body {
 }
 
 .upcoming-card-urgent {
-  background-color: #fff5f5;
-  border-color: #f3c1cb;
+  background-color: var(--color-red-soft);
+  border-color: var(--color-red-light);
 }
 
 .upcoming-card-overdue {
@@ -217,7 +263,7 @@ body {
 }
 
 .todo-title-input:focus {
-  border-color: #2f4bff;
+  border-color: var(--color-red);
 }
 
 .todo-form-options {
@@ -253,7 +299,7 @@ body {
 
 .todo-select:focus,
 .todo-date-input:focus {
-  border-color: #2f4bff;
+  border-color: var(--color-red);
 }
 
 .todo-form-field-memo {
@@ -273,7 +319,7 @@ body {
 }
 
 .todo-memo-input:focus {
-  border-color: #2f4bff;
+  border-color: var(--color-red);
 }
 
 .add-btn {
@@ -281,7 +327,7 @@ body {
   font-size: 14px;
   font-weight: 600;
   color: #fff;
-  background-color: #2f4bff;
+  background-color: var(--color-red);
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -291,14 +337,14 @@ body {
 }
 
 .add-btn:hover {
-  background-color: #1f37d6;
+  background-color: var(--color-red-dark);
 }
 
 /* ===== 전체 완료율 표시 ===== */
 .progress-section {
   margin-bottom: 20px;
   padding: 12px 14px;
-  background-color: #f0f3ff;
+  background-color: var(--color-red-soft);
   border-radius: 10px;
 }
 
@@ -311,20 +357,22 @@ body {
 .progress-text {
   font-size: 13px;
   font-weight: 600;
-  color: #2f4bff;
+  color: var(--color-red);
 }
 
 .progress-bar-track {
   width: 100%;
   height: 8px;
-  background-color: #dfe4fb;
+  /* Progress Track: 연한 빨간색 */
+  background-color: var(--color-red-light);
   border-radius: 999px;
   overflow: hidden;
 }
 
 .progress-bar-fill {
   height: 100%;
-  background-color: #2f4bff;
+  /* Progress Fill: 빨간색 */
+  background-color: var(--color-red);
   border-radius: 999px;
   transition: width 0.2s ease;
 }
@@ -368,7 +416,7 @@ body {
   height: 16px;
   flex-shrink: 0;
   cursor: pointer;
-  accent-color: #2f4bff;
+  accent-color: var(--color-red);
 }
 
 .todo-item-content {
@@ -401,23 +449,24 @@ body {
 }
 
 .badge-category {
-  background-color: #e4ecff;
-  color: #2f4bff;
+  background-color: var(--color-red-light);
+  color: var(--color-red);
 }
 
+/* 중요도 뱃지: 모두 빨간 계열로 통일하되, 진함(상) → 중간(중) → 연함(하) 순으로 톤 구분 */
 .badge-priority-상 {
-  background-color: #ffe3e3;
-  color: #d9364f;
+  background-color: var(--color-red);
+  color: #fff;
 }
 
 .badge-priority-중 {
-  background-color: #fff3d6;
-  color: #b98400;
+  background-color: var(--color-red-light);
+  color: var(--color-red-dark);
 }
 
 .badge-priority-하 {
-  background-color: #e4f7e9;
-  color: #2f9e52;
+  background-color: var(--color-red-soft);
+  color: var(--color-red);
 }
 
 .badge-due-date {
@@ -425,20 +474,21 @@ body {
   color: #555;
 }
 
+/* 학과 유형 뱃지: 진한 빨간색 계열 (카테고리/중요도와 구분되게 진하게) */
 .badge-type {
-  background-color: #f1e9ff;
-  color: #7c3aed;
+  background-color: var(--color-red-dark);
+  color: #fff;
 }
 
 .badge-dday-normal {
-  background-color: #e4ecff;
-  color: #2f4bff;
+  background-color: var(--color-red-light);
+  color: var(--color-red-dark);
   font-weight: 600;
 }
 
 .badge-dday-urgent {
-  background-color: #ffe3e3;
-  color: #d9364f;
+  background-color: var(--color-red-light);
+  color: var(--color-red);
   font-weight: 700;
 }
 
@@ -477,9 +527,14 @@ body {
   cursor: pointer;
 }
 
+.todo-workday-checkbox {
+  accent-color: var(--color-red);
+}
+
+/* 아르바이트 근무 요일 뱃지: 중간 톤 빨간 계열 */
 .badge-workdays {
-  background-color: #fff3d6;
-  color: #b98400;
+  background-color: var(--color-red-light);
+  color: var(--color-red-dark);
 }
 
 /* ===== 월간 캘린더 뷰 ===== */
@@ -496,6 +551,9 @@ body {
 
 .calendar-title {
   margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
 }
 
 .calendar-nav-btn {
@@ -504,7 +562,8 @@ body {
   border: 1px solid #d9dce3;
   border-radius: 8px;
   background-color: #fff;
-  color: #2f4bff;
+  /* 캘린더 영역은 헬로키티 의상 청색 테마 유지 */
+  color: var(--color-blue);
   font-size: 16px;
   line-height: 1;
   cursor: pointer;
@@ -512,7 +571,7 @@ body {
 }
 
 .calendar-nav-btn:hover {
-  background-color: #f0f3ff;
+  background-color: var(--color-blue-soft);
 }
 
 .calendar-grid {
@@ -544,12 +603,12 @@ body {
 }
 
 .calendar-day-cell:not(.calendar-day-empty):hover {
-  background-color: #eef1fb;
+  background-color: var(--color-blue-soft);
 }
 
 .calendar-day-cell.calendar-day-selected {
-  border-color: #2f4bff;
-  background-color: #e4ecff;
+  border-color: var(--color-blue);
+  background-color: var(--color-blue-light);
 }
 
 .calendar-day-cell.calendar-day-empty {
@@ -558,8 +617,8 @@ body {
 }
 
 .calendar-day-cell.calendar-day-today {
-  border-color: #2f4bff;
-  background-color: #f0f3ff;
+  border-color: var(--color-blue);
+  background-color: var(--color-blue-soft);
 }
 
 .calendar-day-number {
@@ -569,23 +628,25 @@ body {
 }
 
 .calendar-day-today .calendar-day-number {
-  color: #2f4bff;
+  color: var(--color-blue);
 }
 
+/* 캘린더 이벤트 칩(마감일 할 일): 헬로키티 의상 청색 */
 .calendar-event {
   font-size: 10px;
   padding: 1px 4px;
   border-radius: 4px;
-  background-color: #e4ecff;
-  color: #2f4bff;
+  background-color: var(--color-blue-light);
+  color: var(--color-blue);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* 캘린더 이벤트 칩(아르바이트 근무 요일)도 동일하게 헬로키티 의상 청색 계열로 통일 (색을 조금 더 진하게 해서 구분) */
 .calendar-event-workday {
-  background-color: #fff3d6;
-  color: #b98400;
+  background-color: var(--color-blue);
+  color: #fff;
 }
 
 /* ===== 캘린더 날짜 클릭 시 상세 일정 패널 ===== */
@@ -630,6 +691,12 @@ body {
   word-break: break-all;
 }
 
+/* 캘린더 상세 일정 패널 안의 뱃지는 캘린더 테마(청색)에 맞춰 표시 */
+.calendar-detail-item .badge {
+  background-color: var(--color-blue-light);
+  color: var(--color-blue);
+}
+
 /* ===== 할 일 카드 메모 표시 ===== */
 .todo-item-memo {
   display: flex;
@@ -637,7 +704,7 @@ body {
   gap: 4px;
   margin-top: 2px;
   padding: 8px 10px;
-  background-color: #f0f3ff;
+  background-color: var(--color-red-soft);
   border-radius: 8px;
 }
 
@@ -659,7 +726,7 @@ body {
   padding: 0;
   font-size: 12px;
   font-weight: 600;
-  color: #2f4bff;
+  color: var(--color-red);
   background: none;
   border: none;
   cursor: pointer;
@@ -683,16 +750,16 @@ body {
   flex-shrink: 0;
   padding: 6px 12px;
   font-size: 13px;
-  color: #d9364f;
+  color: var(--color-red);
   background-color: #fff;
-  border: 1px solid #f3c1cb;
+  border: 1px solid var(--color-red-light);
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .delete-btn:hover {
-  background-color: #d9364f;
+  background-color: var(--color-red);
   color: #fff;
 }
 

@@ -48,10 +48,15 @@
  *   24) 주간 시간표에서 등록된 수업 칸을 클릭해도 삭제되지 않도록 수정하고,
  *       칸 안의 작은 X 버튼을 눌렀을 때만 삭제되도록 변경 (실수로 삭제되는 문제 방지)
  *
- * 이번 단계(T11)에서 새로 추가한 내용:
+ * T11에서 만든 기능 (그대로 유지):
  *   25) 프로그램 이름을 'Kitty Campus Planner'로 변경하고 헬로키티 테마 디자인 적용
  *       (전체 테마 빨간색, 캘린더 영역만 청색, 페이지 배경/섹션 아이콘에 키티 이미지 배치)
- *       → 이 JS 파일의 동작 로직 자체는 변경되지 않았고, index.html / css/style.css만 수정되었습니다.
+ *
+ * 이번 단계(T12)에서 새로 추가한 내용:
+ *   26) 월간 캘린더의 날짜 칸마다 그 날의 일정 상태(마감 지남/마감 임박/여유 있음/일정 없음)에
+ *       맞는 키티 표정 스티커(css/키티 표정 폴더)를 자동으로 보여주기
+ *   27) 캘린더 위쪽 "캘린더 스티커 꾸미기" 영역에서 상태별로 원하는 키티 표정을 사용자가 직접
+ *       골라 바꿀 수 있게 하고, 고른 설정을 브라우저 저장소에 저장해 새로고침해도 유지되게 하기
  */
 
 // 할 일 카드에서 메모를 기본으로 보여줄 최대 글자 수 (이보다 길면 "더보기"로 축약)
@@ -81,6 +86,79 @@ const SCHEDULE_STORAGE_KEY = "smart-campus-planner-schedule";
 // 브라우저에 할 일 목록을 저장할 때 사용하는 저장소 키(이름표) 입니다.
 // 다른 데이터와 섞이지 않도록 이 앱만의 고유한 이름을 사용합니다.
 const STORAGE_KEY = "smart-campus-planner-todos";
+
+// ===== 캘린더 스티커 꾸미기 (T12) =====
+// "css/키티 표정" 폴더에 있는 키티 표정 이미지들을 캘린더 날짜 칸의 스티커로 사용합니다.
+// 사용자가 각 날짜 상태(overdue/urgent/normal/none)마다 원하는 표정을 골라 꾸밀 수 있습니다.
+const CALENDAR_STICKER_OPTIONS = [
+  { value: "울음키티", src: "css/키티 표정/울음키티.png", label: "울음 키티" },
+  { value: "우울키티", src: "css/키티 표정/우울키티.png", label: "우울 키티" },
+  { value: "안경키티", src: "css/키티 표정/안경키티.png", label: "안경 키티" },
+  { value: "잠자는 키티", src: "css/키티 표정/잠자는 키티.png", label: "잠자는 키티" },
+  { value: "냠냠키티", src: "css/키티 표정/냠냠키티.png", label: "냠냠 키티" },
+  { value: "사랑키티", src: "css/키티 표정/사랑키티.png", label: "사랑 키티" },
+  { value: "감기키티", src: "css/키티 표정/감기키티.png", label: "감기 키티" },
+];
+
+// 날짜 상태별 기본 스티커 매핑
+// - overdue(마감 지남): 울음키티 / urgent(마감 임박, D-3~D-Day): 우울키티
+// - normal(여유 있음, 일정은 있지만 임박하지 않음): 안경키티 / none(일정 없음): 잠자는 키티
+const DEFAULT_CALENDAR_STICKERS = {
+  overdue: "울음키티",
+  urgent: "우울키티",
+  normal: "안경키티",
+  none: "잠자는 키티",
+};
+
+// 캘린더 스티커 설정을 저장할 때 사용하는 브라우저 저장소 키
+const CALENDAR_STICKER_STORAGE_KEY = "smart-campus-planner-calendar-stickers";
+
+/**
+ * 브라우저 저장소(localStorage)에서 저장되어 있던 캘린더 스티커 설정을 불러옵니다.
+ * 저장된 값이 없거나 형식이 올바르지 않으면 기본 설정을 반환합니다.
+ * @returns {{overdue: string, urgent: string, normal: string, none: string}} 상태별 스티커 값(value)
+ */
+function loadCalendarStickers() {
+  try {
+    const raw = localStorage.getItem(CALENDAR_STICKER_STORAGE_KEY);
+    if (!raw) {
+      return { ...DEFAULT_CALENDAR_STICKERS };
+    }
+    const parsed = JSON.parse(raw);
+    const validValues = CALENDAR_STICKER_OPTIONS.map((option) => option.value);
+    const merged = { ...DEFAULT_CALENDAR_STICKERS };
+    Object.keys(DEFAULT_CALENDAR_STICKERS).forEach((state) => {
+      if (parsed && validValues.includes(parsed[state])) {
+        merged[state] = parsed[state];
+      }
+    });
+    return merged;
+  } catch (error) {
+    console.warn("저장된 캘린더 스티커 설정을 불러오는 중 문제가 발생하여 기본 설정으로 시작합니다.", error);
+    return { ...DEFAULT_CALENDAR_STICKERS };
+  }
+}
+
+/**
+ * 현재 캘린더 스티커 설정(calendarStickers)을 브라우저 저장소(localStorage)에 저장합니다.
+ */
+function saveCalendarStickers() {
+  try {
+    localStorage.setItem(CALENDAR_STICKER_STORAGE_KEY, JSON.stringify(calendarStickers));
+  } catch (error) {
+    console.warn("캘린더 스티커 설정을 저장하는 중 문제가 발생했습니다.", error);
+  }
+}
+
+/**
+ * 스티커 값(value)에 해당하는 이미지 경로를 찾아 반환합니다.
+ * @param {string} value 스티커 옵션의 value (예: "울음키티")
+ * @returns {string} 이미지 경로. 일치하는 옵션이 없으면 빈 문자열.
+ */
+function getCalendarStickerSrc(value) {
+  const option = CALENDAR_STICKER_OPTIONS.find((item) => item.value === value);
+  return option ? option.src : "";
+}
 
 /**
  * 브라우저 저장소(localStorage)에서 저장되어 있던 할 일 목록을 불러옵니다.
@@ -153,6 +231,10 @@ let todos = loadTodos();
 // 페이지가 열릴 때 브라우저에 저장되어 있던 데이터를 먼저 불러옵니다.
 let schedule = loadSchedule();
 
+// 캘린더 날짜 상태별 스티커 설정 (overdue/urgent/normal/none)
+// 페이지가 열릴 때 브라우저에 저장되어 있던 설정을 먼저 불러옵니다.
+let calendarStickers = loadCalendarStickers();
+
 // 화면 요소 가져오기
 const todoForm = document.getElementById("todo-form");
 const todoTitleInput = document.getElementById("todo-title-input");
@@ -191,6 +273,10 @@ const calendarNextBtn = document.getElementById("calendar-next-btn");
 const calendarDetailTitleEl = document.getElementById("calendar-detail-title");
 const calendarDetailListEl = document.getElementById("calendar-detail-list");
 const calendarDetailEmptyStateEl = document.getElementById("calendar-detail-empty-state");
+
+// 캘린더 스티커 꾸미기 관련 화면 요소 가져오기
+const calendarStickerSelectEls = document.querySelectorAll(".calendar-sticker-select");
+const calendarStickerPreviewEls = document.querySelectorAll(".calendar-sticker-preview");
 
 // 현재 캘린더에 보여주고 있는 연/월 (0-indexed 월: 0=1월 ... 11=12월)
 const now = new Date();
@@ -448,11 +534,54 @@ function getEventsForDate(dateKey) {
 }
 
 /**
+ * 특정 날짜(dateKey)의 일정 상태를 계산해 캘린더 스티커에 사용할 상태 키를 반환합니다.
+ * - overdue: 그 날짜에 마감일인 할 일 중 이미 지난(D+) 것이 있는 경우
+ * - urgent: 마감이 임박(D-3 ~ D-Day)한 할 일이 있는 경우
+ * - normal: 마감/근무 등 일정은 있지만 임박하거나 지난 것은 없는 경우
+ * - none: 그 날짜에 아무 일정도 없는 경우
+ * @param {string} dateKey YYYY-MM-DD 형식의 날짜 문자열
+ * @returns {"overdue" | "urgent" | "normal" | "none"} 날짜 상태
+ */
+function getCalendarDateState(dateKey) {
+  const events = getEventsForDate(dateKey);
+  if (events.length === 0) {
+    return "none";
+  }
+
+  let hasOverdue = false;
+  let hasUrgent = false;
+
+  events.forEach(({ todo, isWorkday }) => {
+    if (isWorkday || !todo.dueDate) {
+      return;
+    }
+    const dDayInfo = getDDayInfo(todo.dueDate);
+    if (!dDayInfo) {
+      return;
+    }
+    if (dDayInfo.state === "overdue") {
+      hasOverdue = true;
+    } else if (dDayInfo.state === "urgent") {
+      hasUrgent = true;
+    }
+  });
+
+  if (hasOverdue) {
+    return "overdue";
+  }
+  if (hasUrgent) {
+    return "urgent";
+  }
+  return "normal";
+}
+
+/**
  * 현재 캘린더가 보여주고 있는 연/월(calendarYear, calendarMonth)을 기준으로
  * 월간 캘린더 그리드(<div id="calendar-grid">)를 새로 그립니다.
  * - 마감일이 있는 학과/개인 할 일은 해당 마감일 날짜 칸에 표시합니다.
  * - 아르바이트 근무 요일이 지정된 할 일은 그 요일에 해당하는 이번 달의 모든 날짜 칸에 표시합니다.
  * - 날짜 칸을 클릭하면 그 날의 상세 일정을 화면 아래쪽에 보여줍니다.
+ * - 날짜 상태(마감 지남/임박/여유/없음)에 따라 사용자가 설정한 키티 스티커를 함께 보여줍니다.
  */
 function renderCalendar() {
   calendarTitleEl.textContent = `${calendarYear}년 ${calendarMonth + 1}월`;
@@ -499,6 +628,17 @@ function renderCalendar() {
     dayNumberEl.className = "calendar-day-number";
     dayNumberEl.textContent = String(day);
     dayCell.appendChild(dayNumberEl);
+
+    // 날짜 상태(마감 지남/임박/여유/없음)에 맞는 키티 스티커를 날짜 칸 오른쪽 위에 표시
+    const dateState = getCalendarDateState(dateKey);
+    const stickerSrc = getCalendarStickerSrc(calendarStickers[dateState]);
+    if (stickerSrc) {
+      const stickerEl = document.createElement("img");
+      stickerEl.className = "calendar-day-sticker";
+      stickerEl.src = stickerSrc;
+      stickerEl.alt = calendarStickers[dateState];
+      dayCell.appendChild(stickerEl);
+    }
 
     // 이 날짜의 일정(마감일 할 일 + 근무 요일 할 일)을 모아 표시
     getEventsForDate(dateKey).forEach(({ todo, isWorkday }) => {
@@ -889,7 +1029,50 @@ calendarNextBtn.addEventListener("click", () => {
   renderCalendar();
 });
 
+/**
+ * 캘린더 스티커 꾸미기 설정 영역(상태별 select + 미리보기 이미지)을 초기화하고,
+ * 현재 저장된 스티커 설정값으로 화면을 채웁니다.
+ * select의 옵션 목록은 CALENDAR_STICKER_OPTIONS를 기준으로 한 번만 만들고,
+ * 선택값과 미리보기 이미지는 calendarStickers 상태에 맞춰 갱신합니다.
+ */
+function renderCalendarStickerSettings() {
+  calendarStickerSelectEls.forEach((selectEl) => {
+    const state = selectEl.dataset.state;
+
+    // select 옵션 목록이 비어있으면(최초 1회) 옵션을 채워 넣습니다.
+    if (selectEl.options.length === 0) {
+      CALENDAR_STICKER_OPTIONS.forEach((option) => {
+        const optionEl = document.createElement("option");
+        optionEl.value = option.value;
+        optionEl.textContent = option.label;
+        selectEl.appendChild(optionEl);
+      });
+    }
+
+    selectEl.value = calendarStickers[state];
+  });
+
+  calendarStickerPreviewEls.forEach((previewEl) => {
+    const state = previewEl.dataset.state;
+    previewEl.src = getCalendarStickerSrc(calendarStickers[state]);
+    previewEl.alt = calendarStickers[state];
+  });
+}
+
+// 스티커 select에서 다른 표정을 고르면, 해당 상태의 스티커 설정을 바꾸고 저장한 뒤
+// 미리보기와 캘린더 화면을 함께 다시 그립니다.
+calendarStickerSelectEls.forEach((selectEl) => {
+  selectEl.addEventListener("change", () => {
+    const state = selectEl.dataset.state;
+    calendarStickers = { ...calendarStickers, [state]: selectEl.value };
+    saveCalendarStickers();
+    renderCalendarStickerSettings();
+    renderCalendar();
+  });
+});
+
 // 페이지가 처음 열렸을 때 화면 초기 상태 그리기 (저장된 데이터가 있으면 그대로 복원)
+renderCalendarStickerSettings();
 renderTodoList();
 renderSchedule();
 renderCalendar();

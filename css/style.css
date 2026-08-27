@@ -542,6 +542,64 @@ body {
   margin-bottom: 20px;
 }
 
+/* ===== 캘린더 스티커 꾸미기 설정 ===== */
+.calendar-sticker-settings {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  background-color: var(--color-blue-soft);
+  border: 1px solid var(--color-blue-light);
+  border-radius: 10px;
+}
+
+.calendar-sticker-settings-title {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-blue);
+}
+
+.calendar-sticker-settings-desc {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: #7a7f8c;
+}
+
+.calendar-sticker-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.calendar-sticker-field {
+  flex: 1;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.calendar-sticker-field-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.calendar-sticker-preview {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  flex-shrink: 0;
+  background-color: #fff;
+  border: 1px solid var(--color-blue-light);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.calendar-sticker-select {
+  flex: 1;
+  min-width: 0;
+}
+
 .calendar-header {
   display: flex;
   align-items: center;
@@ -589,6 +647,7 @@ body {
 }
 
 .calendar-day-cell {
+  position: relative;
   min-height: 64px;
   padding: 4px;
   border-radius: 8px;
@@ -600,6 +659,17 @@ body {
   overflow: hidden;
   cursor: pointer;
   transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+/* 날짜 칸 오른쪽 위에 얹는 키티 표정 스티커 (마감 지남/임박/여유/없음 상태별로 다르게 표시) */
+.calendar-day-sticker {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 .calendar-day-cell:not(.calendar-day-empty):hover {

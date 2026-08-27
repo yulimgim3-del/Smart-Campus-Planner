@@ -99,6 +99,45 @@
         🗓️ 월간 캘린더
         <img class="section-title-icon-img" src="css/꾸미기/키티 우유.png" alt="키티 우유" />
       </h2>
+
+      <!-- 캘린더 날짜 칸에 표시할 키티 표정 스티커를 상태별로 직접 골라 꾸밀 수 있는 설정 영역 -->
+      <div class="calendar-sticker-settings">
+        <h3 class="calendar-sticker-settings-title">🎀 캘린더 스티커 꾸미기</h3>
+        <p class="calendar-sticker-settings-desc">
+          날짜 상태별로 캘린더에 보여줄 키티 스티커를 자유롭게 골라보세요!
+        </p>
+        <div class="calendar-sticker-fields">
+          <label class="calendar-sticker-field">
+            <span class="field-label">마감 지남</span>
+            <div class="calendar-sticker-field-control">
+              <img class="calendar-sticker-preview" data-state="overdue" alt="마감 지남 스티커 미리보기" />
+              <select class="calendar-sticker-select todo-select" data-state="overdue"></select>
+            </div>
+          </label>
+          <label class="calendar-sticker-field">
+            <span class="field-label">마감 임박</span>
+            <div class="calendar-sticker-field-control">
+              <img class="calendar-sticker-preview" data-state="urgent" alt="마감 임박 스티커 미리보기" />
+              <select class="calendar-sticker-select todo-select" data-state="urgent"></select>
+            </div>
+          </label>
+          <label class="calendar-sticker-field">
+            <span class="field-label">여유 있음</span>
+            <div class="calendar-sticker-field-control">
+              <img class="calendar-sticker-preview" data-state="normal" alt="여유 있음 스티커 미리보기" />
+              <select class="calendar-sticker-select todo-select" data-state="normal"></select>
+            </div>
+          </label>
+          <label class="calendar-sticker-field">
+            <span class="field-label">일정 없음</span>
+            <div class="calendar-sticker-field-control">
+              <img class="calendar-sticker-preview" data-state="none" alt="일정 없음 스티커 미리보기" />
+              <select class="calendar-sticker-select todo-select" data-state="none"></select>
+            </div>
+          </label>
+        </div>
+      </div>
+
       <div class="calendar-header">
         <button type="button" id="calendar-prev-btn" class="calendar-nav-btn" aria-label="이전 달">‹</button>
         <h3 id="calendar-title" class="calendar-title">0000년 00월</h3>

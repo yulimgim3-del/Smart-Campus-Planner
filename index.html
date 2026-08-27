@@ -207,7 +207,8 @@
             </select>
           </label>
 
-          <label class="todo-form-field">
+          <!-- 카테고리가 '아르바이트'일 때는 중요도가 필요 없으므로 숨김 처리 -->
+          <label class="todo-form-field" id="todo-priority-field">
             <span class="field-label">중요도</span>
             <select id="todo-priority-select" class="todo-select">
               <option value="상">상</option>

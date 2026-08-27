@@ -52,11 +52,17 @@
  *   25) 프로그램 이름을 'Kitty Campus Planner'로 변경하고 헬로키티 테마 디자인 적용
  *       (전체 테마 빨간색, 캘린더 영역만 청색, 페이지 배경/섹션 아이콘에 키티 이미지 배치)
  *
- * 이번 단계(T12)에서 새로 추가한 내용:
+ * T12에서 만든 기능 (그대로 유지):
  *   26) 월간 캘린더의 날짜 칸마다 그 날의 일정 상태(마감 지남/마감 임박/여유 있음/일정 없음)에
  *       맞는 키티 표정 스티커(css/키티 표정 폴더)를 자동으로 보여주기
  *   27) 캘린더 위쪽 "캘린더 스티커 꾸미기" 영역에서 상태별로 원하는 키티 표정을 사용자가 직접
  *       골라 바꿀 수 있게 하고, 고른 설정을 브라우저 저장소에 저장해 새로고침해도 유지되게 하기
+ *
+ * 이번 단계(T13)에서 새로 추가/개선한 내용:
+ *   28) 캘린더 영역의 색상 테마를 청색에서 전체 테마와 동일한 빨간색 계열로 통일
+ *       (css/style.css의 --color-blue* 변수 및 관련 스타일을 --color-red* 계열로 교체)
+ *   29) 카테고리가 '아르바이트'일 때는 중요도(상/중/하)가 필요 없다고 판단하여
+ *       중요도 선택 필드를 숨기고, 저장/뱃지 표시에서도 제외하기
  */
 
 // 할 일 카드에서 메모를 기본으로 보여줄 최대 글자 수 (이보다 길면 "더보기"로 축약)
@@ -241,6 +247,7 @@ const todoTitleInput = document.getElementById("todo-title-input");
 const todoCategorySelect = document.getElementById("todo-category-select");
 const todoTypeField = document.getElementById("todo-type-field");
 const todoTypeSelect = document.getElementById("todo-type-select");
+const todoPriorityField = document.getElementById("todo-priority-field");
 const todoPrioritySelect = document.getElementById("todo-priority-select");
 const todoDueDateField = document.getElementById("todo-due-date-field");
 const todoDueDateInput = document.getElementById("todo-due-date-input");
@@ -296,6 +303,15 @@ function updateTypeFieldVisibility() {
 }
 
 /**
+ * 카테고리 선택값에 따라 '중요도' 선택 필드를 보이거나 숨깁니다.
+ * 카테고리가 '아르바이트'일 때는 중요도가 필요 없으므로 숨깁니다.
+ */
+function updatePriorityFieldVisibility() {
+  const isPartTimeCategory = todoCategorySelect.value === "아르바이트";
+  todoPriorityField.classList.toggle("hidden", isPartTimeCategory);
+}
+
+/**
  * 카테고리 선택값에 따라 '마감일' 필드와 '근무 요일' 필드를 서로 바꿔가며 보여줍니다.
  * 카테고리가 '아르바이트'일 때는 마감일 대신 근무 요일(월~일, 중복 선택 가능)을 지정합니다.
  */
@@ -314,14 +330,16 @@ function updateDueDateOrWorkdaysVisibility() {
   }
 }
 
-// 카테고리를 바꿀 때마다 유형 필드 / 마감일-근무 요일 필드의 표시 여부를 갱신합니다.
+// 카테고리를 바꿀 때마다 유형 필드 / 중요도 필드 / 마감일-근무 요일 필드의 표시 여부를 갱신합니다.
 todoCategorySelect.addEventListener("change", () => {
   updateTypeFieldVisibility();
+  updatePriorityFieldVisibility();
   updateDueDateOrWorkdaysVisibility();
 });
 
 // 페이지가 처음 열렸을 때도 현재 선택된 카테고리 기준으로 필드 표시 여부를 맞춰줍니다.
 updateTypeFieldVisibility();
+updatePriorityFieldVisibility();
 updateDueDateOrWorkdaysVisibility();
 
 /**
@@ -831,10 +849,13 @@ function createTodoItemElement(todo) {
     metaWrap.appendChild(typeBadge);
   }
 
-  const priorityBadge = document.createElement("span");
-  priorityBadge.className = "badge badge-priority-" + todo.priority;
-  priorityBadge.textContent = "중요도: " + todo.priority;
-  metaWrap.appendChild(priorityBadge);
+  // 카테고리가 '아르바이트'인 할 일은 중요도가 없으므로(priority가 빈 값) 중요도 뱃지를 보여주지 않습니다.
+  if (todo.priority) {
+    const priorityBadge = document.createElement("span");
+    priorityBadge.className = "badge badge-priority-" + todo.priority;
+    priorityBadge.textContent = "중요도: " + todo.priority;
+    metaWrap.appendChild(priorityBadge);
+  }
 
   if (todo.dueDate) {
     const dueDateBadge = document.createElement("span");
@@ -903,7 +924,7 @@ function renderProgress() {
  * @param {string} params.title 할 일 제목
  * @param {string} params.category 카테고리 (학과 / 아르바이트 / 개인)
  * @param {string} params.type 유형 (과제 / 시험 / 발표 / 팀플 / 기타, 카테고리가 '학과'일 때만 의미 있음)
- * @param {string} params.priority 중요도 (상 / 중 / 하)
+ * @param {string} params.priority 중요도 (상 / 중 / 하, 카테고리가 '아르바이트'가 아닐 때만 의미 있음)
  * @param {string} params.dueDate 마감일 (YYYY-MM-DD 형식 문자열, 카테고리가 '아르바이트'가 아닐 때만 의미 있음)
  * @param {string[]} params.workDays 근무 요일 목록 (카테고리가 '아르바이트'일 때만 의미 있음)
  * @param {string} params.memo 메모 (선택 입력, 비어있어도 할 일 등록에는 문제 없음)
@@ -922,7 +943,9 @@ function addTodo({ title, category, type, priority, dueDate, workDays, memo }) {
   const resolvedType = isSchoolCategory && SCHOOL_TYPES.includes(type) ? type : "";
 
   // 카테고리가 '아르바이트'일 때는 마감일 대신 근무 요일을 저장하고, 마감일은 저장하지 않습니다.
+  // 아르바이트는 중요도도 필요 없으므로 저장하지 않습니다.
   const isPartTimeCategory = category === "아르바이트";
+  const resolvedPriority = isPartTimeCategory ? "" : priority;
   const resolvedDueDate = isPartTimeCategory ? "" : dueDate || "";
   const resolvedWorkDays = isPartTimeCategory
     ? (workDays || []).filter((day) => WORK_DAYS.includes(day))
@@ -933,7 +956,7 @@ function addTodo({ title, category, type, priority, dueDate, workDays, memo }) {
     title: trimmedTitle,
     category,
     type: resolvedType,
-    priority,
+    priority: resolvedPriority,
     dueDate: resolvedDueDate,
     workDays: resolvedWorkDays,
     memo: trimmedMemo,

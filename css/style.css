@@ -700,6 +700,24 @@ body {
   color: var(--color-red-dark);
 }
 
+/* "개인" 일정에 지정된 캘린더 스티커(냠냠/사랑/감기 키티)를 보여주는 뱃지.
+   데님(파란) 포인트 컬러로 개인 카테고리 색상과 어울리게 표시합니다. */
+.badge-personal-sticker {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--color-denim-soft);
+  color: var(--color-denim);
+}
+
+.badge-personal-sticker-img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  border-radius: 50%;
+  background-color: #fff;
+}
+
 /* ===== 월간 캘린더 뷰 ===== */
 .calendar-section {
   position: relative;
@@ -759,7 +777,6 @@ body {
   gap: 6px;
 }
 
-.calendar-sticker-preview,
 .calendar-fixed-sticker-preview {
   width: 26px;
   height: 26px;
@@ -771,14 +788,9 @@ body {
   padding: 2px;
 }
 
-/* 개인 일정 스티커 select(.todo-select)가 미리보기 이미지 옆에서 남은 너비를 채우도록 함 */
-.calendar-sticker-field-control .todo-select {
-  flex: 1;
-  min-width: 0;
-}
-
 /* 고정 상태 스티커(마감 지남/임박/여유/없음) 미리보기 옆에 붙는 텍스트 라벨.
-   선택할 수 없는 고정 값임을 나타내기 위해 select 대신 일반 텍스트로 보여줍니다. */
+   선택할 수 없는 고정 값임을 나타내기 위해 select 대신 일반 텍스트로 보여줍니다.
+   "개인 일정" 필드에서는 안내 문구(할 일 등록 시 선택)를 보여줄 때도 재사용합니다. */
 .calendar-sticker-fixed-label {
   font-size: 13px;
   color: #555;
@@ -788,6 +800,17 @@ body {
 .calendar-sticker-field-personal .field-label {
   color: var(--color-denim);
   font-weight: 600;
+}
+
+.calendar-sticker-field-personal .calendar-sticker-fixed-label {
+  color: var(--color-denim);
+  font-style: italic;
+}
+
+/* ===== 할 일 등록 폼: 카테고리별 캘린더 스티커 선택 (일정마다 개별 지정) ===== */
+/* 카테고리가 "개인"이 아니면 이 필드 자체를 숨깁니다. (.todo-form-field.hidden 규칙 재사용) */
+#todo-personal-sticker-field .todo-select {
+  border-color: var(--color-denim-light);
 }
 
 .calendar-header {

@@ -102,9 +102,15 @@
  *   40) 캘린더 날짜 상태(마감 지남/마감 임박/여유 있음/일정 없음) 스티커를 사용자가 바꿀 수 없는
  *       고정 값으로 변경 (마감 지남: 우울 키티 / 마감 임박: 울음 키티 / 여유 있음: 안경 키티 /
  *       일정 없음: 잠자는 키티)
- *   41) "개인" 카테고리 일정 전용 스티커(냠냠/사랑/감기 키티)를 새로 추가하고, 캘린더 위쪽
- *       설정 영역에서 사용자가 하나를 골라 쓸 수 있게 하기. 완료하지 않은 개인 일정이 있는
- *       날짜는 마감 상태와 무관하게 이 개인 스티커가 항상 최우선으로 표시됨
+ *   41) "개인" 카테고리 일정 전용 스티커(냠냠/사랑/감기 키티)를 새로 추가하기. 완료하지 않은
+ *       개인 일정이 있는 날짜는 마감 상태와 무관하게 이 개인 스티커가 항상 최우선으로 표시됨
+ *
+ * 이번 단계(T20)에서 개선한 내용:
+ *   42) "개인" 일정 스티커를 캘린더 위쪽에서 한 번에 바꾸는 전역 설정에서, 할 일을 등록할 때
+ *       일정마다 각각 지정하는 방식으로 변경 (todo.personalSticker 필드 추가). 카테고리가
+ *       "개인"일 때만 할 일 등록 폼에 "캘린더 스티커" select가 나타나고, 완료하지 않은 개인
+ *       일정이 여러 개 있는 날짜는 그중 먼저 등록된 일정의 스티커를 표시함
+ *   43) 할 일 목록 카드에도 지정된 캘린더 스티커를 작은 이미지 뱃지로 함께 보여주기
  */
 
 // 할 일 카드에서 메모를 기본으로 보여줄 최대 글자 수 (이보다 길면 "더보기"로 축약)
@@ -160,50 +166,17 @@ const FIXED_CALENDAR_STATE_STICKERS = {
   none: "잠자는 키티",
 };
 
-// "개인" 카테고리 일정이 있는 날짜에 한해서, 사용자가 직접 골라 쓸 수 있는 스티커 목록
-// (냠냠/사랑/감기 키티 중에서 선택). 완료하지 않은 개인 일정이 있는 날짜는 마감 상태와 무관하게
-// 이 스티커가 항상 우선 표시됩니다.
+// "개인" 카테고리 할 일마다 사용자가 직접 골라 쓸 수 있는 스티커 목록
+// (냠냠/사랑/감기 키티 중에서 선택). 캘린더 위쪽에서 한 번에 바꾸는 전역 설정이 아니라,
+// 할 일을 등록할 때 각 일정(todo.personalSticker)마다 개별적으로 지정됩니다.
 const PERSONAL_STICKER_OPTIONS = [
   { value: "냠냠키티", src: "css/키티 표정/냠냠키티.png", label: "냠냠 키티" },
   { value: "사랑키티", src: "css/키티 표정/사랑키티.png", label: "사랑 키티" },
   { value: "감기키티", src: "css/키티 표정/감기키티.png", label: "감기 키티" },
 ];
 
-// 개인 일정 스티커의 기본값
+// 개인 일정 스티커의 기본값 (사용자가 별도로 고르지 않았을 때 사용)
 const DEFAULT_PERSONAL_STICKER = "냠냠키티";
-
-// 개인 일정 스티커 설정을 저장할 때 사용하는 브라우저 저장소 키
-const PERSONAL_STICKER_STORAGE_KEY = "smart-campus-planner-personal-sticker";
-
-/**
- * 브라우저 저장소(localStorage)에서 저장되어 있던 "개인 일정" 스티커 선택값을 불러옵니다.
- * 저장된 값이 없거나 PERSONAL_STICKER_OPTIONS에 없는 값이면 기본값을 반환합니다.
- * @returns {string} 선택된 개인 일정 스티커 값 (예: "냠냠키티")
- */
-function loadPersonalSticker() {
-  try {
-    const raw = localStorage.getItem(PERSONAL_STICKER_STORAGE_KEY);
-    const validValues = PERSONAL_STICKER_OPTIONS.map((option) => option.value);
-    if (raw && validValues.includes(raw)) {
-      return raw;
-    }
-    return DEFAULT_PERSONAL_STICKER;
-  } catch (error) {
-    console.warn("저장된 개인 일정 스티커 설정을 불러오는 중 문제가 발생하여 기본값으로 시작합니다.", error);
-    return DEFAULT_PERSONAL_STICKER;
-  }
-}
-
-/**
- * 현재 선택된 "개인 일정" 스티커 값(personalSticker)을 브라우저 저장소(localStorage)에 저장합니다.
- */
-function savePersonalSticker() {
-  try {
-    localStorage.setItem(PERSONAL_STICKER_STORAGE_KEY, personalSticker);
-  } catch (error) {
-    console.warn("개인 일정 스티커 설정을 저장하는 중 문제가 발생했습니다.", error);
-  }
-}
 
 /**
  * 스티커 값(value)에 해당하는 이미지 경로를 찾아 반환합니다.
@@ -313,10 +286,6 @@ let todos = loadTodos();
 // 페이지가 열릴 때 브라우저에 저장되어 있던 데이터를 먼저 불러옵니다.
 let schedule = loadSchedule();
 
-// "개인" 카테고리 일정이 있는 날짜에 보여줄 스티커 선택값 (냠냠/사랑/감기 키티 중 하나)
-// 페이지가 열릴 때 브라우저에 저장되어 있던 설정을 먼저 불러옵니다.
-let personalSticker = loadPersonalSticker();
-
 // 화면 요소 가져오기
 const todoForm = document.getElementById("todo-form");
 const todoTitleInput = document.getElementById("todo-title-input");
@@ -329,6 +298,8 @@ const todoDueDateField = document.getElementById("todo-due-date-field");
 const todoDueDateInput = document.getElementById("todo-due-date-input");
 const todoWorkdaysField = document.getElementById("todo-workdays-field");
 const todoWorkdayCheckboxes = document.querySelectorAll(".todo-workday-checkbox");
+const todoPersonalStickerField = document.getElementById("todo-personal-sticker-field");
+const todoPersonalStickerSelect = document.getElementById("todo-personal-sticker-select");
 const todoMemoInput = document.getElementById("todo-memo-input");
 const todoListEl = document.getElementById("todo-list");
 const emptyStateEl = document.getElementById("empty-state");
@@ -361,10 +332,9 @@ const calendarDetailListEl = document.getElementById("calendar-detail-list");
 const calendarDetailEmptyStateEl = document.getElementById("calendar-detail-empty-state");
 
 // 캘린더 스티커 관련 화면 요소 가져오기
-// (마감 지남/임박/여유/없음 4가지 상태 스티커는 고정 미리보기이고, 개인 일정 스티커만 select로 선택 가능합니다)
+// (마감 지남/임박/여유/없음 4가지 상태 스티커는 고정 미리보기이고, 개인 일정 스티커는
+// 캘린더 위쪽이 아니라 할 일 등록 폼에서 일정마다 따로 선택합니다)
 const calendarFixedStickerPreviewEls = document.querySelectorAll(".calendar-fixed-sticker-preview");
-const personalStickerSelectEl = document.getElementById("personal-sticker-select");
-const personalStickerPreviewEl = document.getElementById("personal-sticker-preview");
 
 // 현재 캘린더에 보여주고 있는 연/월 (0-indexed 월: 0=1월 ... 11=12월)
 const now = new Date();
@@ -411,17 +381,40 @@ function updateDueDateOrWorkdaysVisibility() {
   }
 }
 
-// 카테고리를 바꿀 때마다 유형 필드 / 중요도 필드 / 마감일-근무 요일 필드의 표시 여부를 갱신합니다.
+/**
+ * 카테고리 선택값에 따라 '캘린더 스티커' 선택 필드를 보이거나 숨깁니다.
+ * 카테고리가 '개인'일 때만 일정마다 캘린더 스티커(냠냠/사랑/감기 키티)를 지정할 수 있습니다.
+ * select 옵션 목록은 최초 1회만 PERSONAL_STICKER_OPTIONS를 기준으로 채워 넣습니다.
+ */
+function updatePersonalStickerFieldVisibility() {
+  const isPersonalCategory = todoCategorySelect.value === "개인";
+  todoPersonalStickerField.classList.toggle("hidden", !isPersonalCategory);
+
+  if (todoPersonalStickerSelect.options.length === 0) {
+    PERSONAL_STICKER_OPTIONS.forEach((option) => {
+      const optionEl = document.createElement("option");
+      optionEl.value = option.value;
+      optionEl.textContent = option.label;
+      todoPersonalStickerSelect.appendChild(optionEl);
+    });
+    todoPersonalStickerSelect.value = DEFAULT_PERSONAL_STICKER;
+  }
+}
+
+// 카테고리를 바꿀 때마다 유형 필드 / 중요도 필드 / 마감일-근무 요일 필드 / 캘린더 스티커 필드의
+// 표시 여부를 갱신합니다.
 todoCategorySelect.addEventListener("change", () => {
   updateTypeFieldVisibility();
   updatePriorityFieldVisibility();
   updateDueDateOrWorkdaysVisibility();
+  updatePersonalStickerFieldVisibility();
 });
 
 // 페이지가 처음 열렸을 때도 현재 선택된 카테고리 기준으로 필드 표시 여부를 맞춰줍니다.
 updateTypeFieldVisibility();
 updatePriorityFieldVisibility();
 updateDueDateOrWorkdaysVisibility();
+updatePersonalStickerFieldVisibility();
 
 /**
  * 마감일(YYYY-MM-DD)을 기준으로 오늘까지 남은 일수를 계산해 D-Day 정보를 반환합니다.
@@ -784,6 +777,24 @@ function getCalendarDateState(dateKey) {
 }
 
 /**
+ * 특정 날짜(dateKey)에 표시할 "개인 일정" 스티커 값을 찾아 반환합니다.
+ * 완료하지 않은 "개인" 카테고리 일정이 그 날짜에 여러 개 있으면, 목록에 먼저 등록된(가장 앞에 있는)
+ * 일정의 스티커(todo.personalSticker)를 사용합니다. 해당 일정이 없으면 null을 반환합니다.
+ * @param {string} dateKey YYYY-MM-DD 형식의 날짜 문자열
+ * @returns {string | null} 개인 일정 스티커 값 (예: "냠냠키티") 또는 null
+ */
+function getActivePersonalStickerForDate(dateKey) {
+  const events = getEventsForDate(dateKey);
+  const personalEvent = events.find(
+    ({ todo, isWorkday }) => !isWorkday && todo.category === "개인" && !todo.completed
+  );
+  if (!personalEvent) {
+    return null;
+  }
+  return personalEvent.todo.personalSticker || DEFAULT_PERSONAL_STICKER;
+}
+
+/**
  * 현재 캘린더가 보여주고 있는 연/월(calendarYear, calendarMonth)을 기준으로
  * 월간 캘린더 그리드(<div id="calendar-grid">)를 새로 그립니다.
  * - 마감일이 있는 학과/개인 할 일은 해당 마감일 날짜 칸에 표시합니다.
@@ -838,10 +849,13 @@ function renderCalendar() {
     dayCell.appendChild(dayNumberEl);
 
     // 날짜 상태에 맞는 키티 스티커를 날짜 칸 오른쪽 위에 표시합니다.
-    // - personal(완료하지 않은 개인 일정이 있는 날): 사용자가 고른 개인 스티커(냠냠/사랑/감기 키티)
+    // - personal(완료하지 않은 개인 일정이 있는 날): 그 일정을 등록할 때 골라둔 개인 스티커(냠냠/사랑/감기 키티)
     // - overdue/urgent/normal/none: 고정 스티커(우울/울음/안경/잠자는 키티)
     const dateState = getCalendarDateState(dateKey);
-    const stickerValue = dateState === "personal" ? personalSticker : FIXED_CALENDAR_STATE_STICKERS[dateState];
+    const stickerValue =
+      dateState === "personal"
+        ? getActivePersonalStickerForDate(dateKey) || DEFAULT_PERSONAL_STICKER
+        : FIXED_CALENDAR_STATE_STICKERS[dateState];
     const stickerSrc = getCalendarStickerSrc(stickerValue);
     if (stickerSrc) {
       const stickerEl = document.createElement("img");
@@ -1068,6 +1082,20 @@ function createTodoItemElement(todo) {
     metaWrap.appendChild(workDaysBadge);
   }
 
+  // 카테고리가 '개인'이고 캘린더 스티커가 지정되어 있으면, 이 일정에 어떤 캘린더 스티커가
+  // 연결되어 있는지 작은 이미지 뱃지로 보여줍니다. (실제 캘린더 날짜 칸에도 이 스티커가 표시됩니다)
+  if (todo.personalSticker) {
+    const stickerBadge = document.createElement("span");
+    stickerBadge.className = "badge badge-personal-sticker";
+    const stickerImg = document.createElement("img");
+    stickerImg.className = "badge-personal-sticker-img";
+    stickerImg.src = getCalendarStickerSrc(todo.personalSticker);
+    stickerImg.alt = todo.personalSticker;
+    stickerBadge.appendChild(stickerImg);
+    stickerBadge.appendChild(document.createTextNode(todo.personalSticker.replace("키티", " 키티")));
+    metaWrap.appendChild(stickerBadge);
+  }
+
   contentWrap.appendChild(titleSpan);
   contentWrap.appendChild(metaWrap);
 
@@ -1114,9 +1142,10 @@ function renderProgress() {
  * @param {string} params.priority 중요도 (상 / 중 / 하, 카테고리가 '아르바이트'가 아닐 때만 의미 있음)
  * @param {string} params.dueDate 마감일 (YYYY-MM-DD 형식 문자열, 카테고리가 '아르바이트'가 아닐 때만 의미 있음)
  * @param {string[]} params.workDays 근무 요일 목록 (카테고리가 '아르바이트'일 때만 의미 있음)
+ * @param {string} params.personalSticker 캘린더 스티커 (냠냠/사랑/감기 키티, 카테고리가 '개인'일 때만 의미 있음)
  * @param {string} params.memo 메모 (선택 입력, 비어있어도 할 일 등록에는 문제 없음)
  */
-function addTodo({ title, category, type, priority, dueDate, workDays, memo }) {
+function addTodo({ title, category, type, priority, dueDate, workDays, personalSticker, memo }) {
   const trimmedTitle = title.trim();
   if (trimmedTitle === "") {
     return; // 빈 값은 추가하지 않음
@@ -1138,6 +1167,16 @@ function addTodo({ title, category, type, priority, dueDate, workDays, memo }) {
     ? (workDays || []).filter((day) => WORK_DAYS.includes(day))
     : [];
 
+  // 카테고리가 '개인'일 때만 캘린더 스티커(냠냠/사랑/감기 키티)를 저장합니다.
+  // 유효하지 않은 값이 들어오면 기본값(냠냠 키티)으로 저장합니다.
+  const isPersonalCategory = category === "개인";
+  const validPersonalStickers = PERSONAL_STICKER_OPTIONS.map((option) => option.value);
+  const resolvedPersonalSticker = isPersonalCategory
+    ? validPersonalStickers.includes(personalSticker)
+      ? personalSticker
+      : DEFAULT_PERSONAL_STICKER
+    : "";
+
   const newTodo = {
     id: Date.now().toString() + Math.random().toString(16).slice(2), // 간단한 고유 id 생성
     title: trimmedTitle,
@@ -1146,6 +1185,7 @@ function addTodo({ title, category, type, priority, dueDate, workDays, memo }) {
     priority: resolvedPriority,
     dueDate: resolvedDueDate,
     workDays: resolvedWorkDays,
+    personalSticker: resolvedPersonalSticker,
     memo: trimmedMemo,
     completed: false,
   };
@@ -1190,10 +1230,11 @@ todoForm.addEventListener("submit", (event) => {
     priority: todoPrioritySelect.value,
     dueDate: todoDueDateInput.value,
     workDays: checkedWorkDays,
+    personalSticker: todoPersonalStickerSelect.value,
     memo: todoMemoInput.value,
   });
 
-  // 입력창 초기화 (카테고리/중요도는 마지막 선택값을 유지해 연속 입력을 편하게 함)
+  // 입력창 초기화 (카테고리/중요도/캘린더 스티커는 마지막 선택값을 유지해 연속 입력을 편하게 함)
   todoTitleInput.value = "";
   todoDueDateInput.value = "";
   todoMemoInput.value = "";
@@ -1240,10 +1281,10 @@ calendarNextBtn.addEventListener("click", () => {
 });
 
 /**
- * 캘린더 스티커 설정 영역을 초기화하고 화면을 채웁니다.
- * - 마감 지남/마감 임박/여유 있음/일정 없음 4가지 상태 스티커는 고정값이라 미리보기 이미지만 보여줍니다.
- * - "개인" 일정 스티커(냠냠/사랑/감기 키티)만 select로 사용자가 직접 고를 수 있고,
- *   선택값은 personalSticker 상태에 맞춰 갱신합니다.
+ * 캘린더 위쪽 스티커 안내 영역을 초기화하고 화면을 채웁니다.
+ * 마감 지남/마감 임박/여유 있음/일정 없음 4가지 상태 스티커는 고정값이라 미리보기 이미지만 보여줍니다.
+ * "개인" 일정 스티커(냠냠/사랑/감기 키티)는 여기서 전역으로 고르는 게 아니라, 할 일을 등록할 때
+ * 일정마다 각각 지정하므로 이 함수에서는 다루지 않습니다.
  */
 function renderCalendarStickerSettings() {
   // 고정 상태 스티커 미리보기 (마감 지남/임박/여유/없음)
@@ -1252,35 +1293,6 @@ function renderCalendarStickerSettings() {
     const value = FIXED_CALENDAR_STATE_STICKERS[state];
     previewEl.src = getCalendarStickerSrc(value);
     previewEl.alt = value;
-  });
-
-  // 개인 일정 스티커 select + 미리보기
-  if (personalStickerSelectEl) {
-    if (personalStickerSelectEl.options.length === 0) {
-      PERSONAL_STICKER_OPTIONS.forEach((option) => {
-        const optionEl = document.createElement("option");
-        optionEl.value = option.value;
-        optionEl.textContent = option.label;
-        personalStickerSelectEl.appendChild(optionEl);
-      });
-    }
-    personalStickerSelectEl.value = personalSticker;
-  }
-
-  if (personalStickerPreviewEl) {
-    personalStickerPreviewEl.src = getCalendarStickerSrc(personalSticker);
-    personalStickerPreviewEl.alt = personalSticker;
-  }
-}
-
-// 개인 일정 스티커 select에서 다른 표정을 고르면, 설정을 바꾸고 저장한 뒤
-// 미리보기와 캘린더 화면을 함께 다시 그립니다.
-if (personalStickerSelectEl) {
-  personalStickerSelectEl.addEventListener("change", () => {
-    personalSticker = personalStickerSelectEl.value;
-    savePersonalSticker();
-    renderCalendarStickerSettings();
-    renderCalendar();
   });
 }
 

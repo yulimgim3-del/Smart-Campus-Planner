@@ -117,13 +117,14 @@
         <img class="section-title-icon-img section-title-icon-img-large" src="css/꾸미기/키티 우유.png" alt="키티 우유" />
       </h2>
 
-      <!-- 캘린더 날짜 칸에 표시할 키티 표정 스티커 설정 영역.
-           마감 지남/임박/여유/없음 4가지 상태 스티커는 고정이라 미리보기만 보여주고,
-           "개인" 카테고리 일정 스티커만 사용자가 직접 골라 바꿀 수 있습니다. -->
+      <!-- 캘린더 날짜 칸에 표시할 키티 표정 스티커 안내 영역.
+           마감 지남/임박/여유/없음 4가지 상태 스티커는 고정이라 미리보기만 보여줍니다.
+           "개인" 카테고리 일정의 스티커는 여기서 한 번에 바꾸는 게 아니라, 할 일을 등록할 때
+           일정마다 각각 "캘린더 스티커" 필드에서 원하는 키티를 골라 지정합니다. -->
       <div class="calendar-sticker-settings">
         <h3 class="calendar-sticker-settings-title">🎀 캘린더 스티커</h3>
         <p class="calendar-sticker-settings-desc">
-          마감 지남/임박/여유/없음 스티커는 고정이고, 개인 일정 스티커만 원하는 키티로 바꿀 수 있어요!
+          마감 지남/임박/여유/없음 스티커는 고정이에요. 개인 일정 스티커는 할 일 등록할 때 일정마다 따로 고를 수 있어요!
         </p>
         <div class="calendar-sticker-fields">
           <div class="calendar-sticker-field calendar-sticker-field-fixed">
@@ -154,13 +155,12 @@
               <span class="calendar-sticker-fixed-label">잠자는 키티</span>
             </div>
           </div>
-          <label class="calendar-sticker-field calendar-sticker-field-personal">
+          <div class="calendar-sticker-field calendar-sticker-field-personal">
             <span class="field-label">개인 일정</span>
             <div class="calendar-sticker-field-control">
-              <img id="personal-sticker-preview" class="calendar-sticker-preview" alt="개인 일정 스티커 미리보기" />
-              <select id="personal-sticker-select" class="todo-select"></select>
+              <span class="calendar-sticker-fixed-label">할 일 등록 시 일정마다 선택 👇</span>
             </div>
-          </label>
+          </div>
         </div>
       </div>
 
@@ -259,6 +259,12 @@
               </label>
             </div>
           </div>
+
+          <!-- 카테고리가 '개인'일 때만 보이는 캘린더 스티커 선택 필드 (일정마다 원하는 키티 표정을 따로 지정) -->
+          <label class="todo-form-field" id="todo-personal-sticker-field">
+            <span class="field-label">캘린더 스티커</span>
+            <select id="todo-personal-sticker-select" class="todo-select"></select>
+          </label>
         </div>
 
         <!-- 메모 입력 (선택 사항, 비워두어도 할 일 등록 가능) -->

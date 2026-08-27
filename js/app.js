@@ -58,11 +58,16 @@
  *   27) 캘린더 위쪽 "캘린더 스티커 꾸미기" 영역에서 상태별로 원하는 키티 표정을 사용자가 직접
  *       골라 바꿀 수 있게 하고, 고른 설정을 브라우저 저장소에 저장해 새로고침해도 유지되게 하기
  *
- * 이번 단계(T13)에서 새로 추가/개선한 내용:
+ * T13에서 만든 기능 (그대로 유지):
  *   28) 캘린더 영역의 색상 테마를 청색에서 전체 테마와 동일한 빨간색 계열로 통일
  *       (css/style.css의 --color-blue* 변수 및 관련 스타일을 --color-red* 계열로 교체)
  *   29) 카테고리가 '아르바이트'일 때는 중요도(상/중/하)가 필요 없다고 판단하여
  *       중요도 선택 필드를 숨기고, 저장/뱃지 표시에서도 제외하기
+ *
+ * 이번 단계(T14)에서 새로 추가/개선한 내용:
+ *   30) D-Day 뱃지(D-7, D-Day 등)를 일반 텍스트 대신 "css/키티 숫자" 폴더의 숫자/문자 키티
+ *       이미지를 글자별로 이어붙여 보여주기 (해당 폴더에 이미지가 없는 "+"나 "지남"이 포함된
+ *       마감이 지난 경우는 기존처럼 텍스트로 표시)
  */
 
 // 할 일 카드에서 메모를 기본으로 보여줄 최대 글자 수 (이보다 길면 "더보기"로 축약)
@@ -371,6 +376,72 @@ function getDDayInfo(dueDate) {
   return { label: `D+${Math.abs(diffDays)} 지남`, state: "overdue", diffDays };
 }
 
+// ===== D-Day 뱃지 키티 이미지 표시 (T14) =====
+// "css/키티 숫자" 폴더에 있는 숫자(0~9)/문자(D, A, Y, -) 키티 이미지를 D-Day 뱃지의 글자마다 사용합니다.
+// 이 폴더에는 "+"나 "지남" 같은 글자에 대한 이미지가 없으므로, D-Day 라벨의 모든 글자가
+// 이 매핑에 있는 경우(D-7, D-14, D-Day 등)에만 이미지로 표시하고, 그렇지 않은 경우(D+5 지남 등
+// 마감이 지난 경우)는 기존처럼 텍스트로 표시합니다.
+const DDAY_CHAR_IMAGE_MAP = {
+  "0": "css/키티 숫자/0 키티 복사.png",
+  "1": "css/키티 숫자/1 카티.png",
+  "2": "css/키티 숫자/2키티.png",
+  "3": "css/키티 숫자/3 키티.png",
+  "4": "css/키티 숫자/4키티.png",
+  "5": "css/키티 숫자/5 키티.png",
+  "6": "css/키티 숫자/6키티.png",
+  "7": "css/키티 숫자/7 키티.png",
+  "8": "css/키티 숫자/8키티.png",
+  "9": "css/키티 숫자/9 키티.png",
+  "-": "css/키티 숫자/- 키티.png",
+  D: "css/키티 숫자/D 키티.png",
+  A: "css/키티 숫자/A 키티 .png",
+  Y: "css/키티 숫자/Y 키티.png",
+};
+
+/**
+ * D-Day 라벨 문자열(예: "D-7", "D-Day")의 모든 글자가 키티 이미지로 표시 가능한지 확인하고,
+ * 가능하면 글자마다 하나씩 <img> 요소를 만들어 배열로 반환합니다.
+ * "+"나 "지남"처럼 이미지가 없는 글자가 하나라도 포함되어 있으면(예: 마감이 지난 "D+5 지남") null을 반환합니다.
+ * @param {string} label D-Day 라벨 문자열
+ * @returns {HTMLImageElement[] | null} 글자별 키티 이미지 요소 배열, 표시 불가능하면 null
+ */
+function buildDDayImageElements(label) {
+  // "D-Day"처럼 알파벳이 대소문자 섞여 있어도(D, a, y) 같은 이미지를 찾을 수 있도록 대문자로 맞춰 비교합니다.
+  const chars = label.split("");
+  const isRenderable = chars.every((ch) =>
+    Object.prototype.hasOwnProperty.call(DDAY_CHAR_IMAGE_MAP, ch.toUpperCase())
+  );
+  if (!isRenderable) {
+    return null;
+  }
+
+  return chars.map((ch) => {
+    const imgEl = document.createElement("img");
+    imgEl.className = "dday-char-img";
+    imgEl.src = DDAY_CHAR_IMAGE_MAP[ch.toUpperCase()];
+    imgEl.alt = ch;
+    return imgEl;
+  });
+}
+
+/**
+ * D-Day 뱃지(span) 요소 안에 라벨을 채워 넣습니다.
+ * 라벨의 모든 글자가 키티 이미지로 표시 가능하면(D-7, D-Day 등) 글자별 키티 이미지로,
+ * 그렇지 않으면(마감이 지난 "D+5 지남" 등) 기존처럼 텍스트로 표시합니다.
+ * @param {HTMLElement} badgeEl D-Day 뱃지 요소
+ * @param {string} label D-Day 라벨 문자열
+ */
+function fillDDayBadgeContent(badgeEl, label) {
+  const imageEls = buildDDayImageElements(label);
+  if (imageEls) {
+    badgeEl.classList.add("badge-dday-image");
+    badgeEl.setAttribute("aria-label", label);
+    imageEls.forEach((imgEl) => badgeEl.appendChild(imgEl));
+  } else {
+    badgeEl.textContent = label;
+  }
+}
+
 /**
  * 시간표(schedule 배열)를 요일 x 교시 그리드 형태(<div id="schedule-grid">)로 다시 그립니다.
  * 그릴 때마다 현재 시간표를 브라우저 저장소에도 함께 저장합니다.
@@ -509,7 +580,7 @@ function renderUpcoming() {
 
     const dDayEl = document.createElement("span");
     dDayEl.className = "badge badge-dday-" + dDayInfo.state;
-    dDayEl.textContent = dDayInfo.label;
+    fillDDayBadgeContent(dDayEl, dDayInfo.label);
 
     card.appendChild(titleEl);
     card.appendChild(dDayEl);
@@ -868,7 +939,7 @@ function createTodoItemElement(todo) {
     if (dDayInfo && !todo.completed) {
       const dDayBadge = document.createElement("span");
       dDayBadge.className = "badge badge-dday-" + dDayInfo.state;
-      dDayBadge.textContent = dDayInfo.label;
+      fillDDayBadgeContent(dDayBadge, dDayInfo.label);
       metaWrap.appendChild(dDayBadge);
     }
   }

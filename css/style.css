@@ -601,6 +601,23 @@ body {
   font-weight: 600;
 }
 
+/* D-Day 뱃지를 텍스트 대신 "css/키티 숫자" 폴더의 키티 이미지로 표시할 때(D-7, D-Day 등)
+   글자 이미지들을 나란히 붙여 보여줍니다. (마감이 지난 "D+5 지남" 같은 경우는 기존처럼 텍스트로 표시) */
+.badge-dday-image {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  padding: 2px 6px;
+  background-color: transparent;
+}
+
+.dday-char-img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  display: inline-block;
+}
+
 /* 카테고리가 '학과'가 아닐 때 유형 선택 필드를 숨김 */
 .todo-form-field.hidden {
   display: none;

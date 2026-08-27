@@ -289,6 +289,20 @@
       <!-- 할 일 목록 영역을 꾸며주는 키티곰돌이 이미지 (하단 장식) -->
       <img class="todo-list-section-decor-img" src="css/꾸미기/키티곰돌이.png" alt="키티곰돌이" />
     </section>
+
+    <!-- 메모 영역 (T18): 메인 컨테이너 가장 하단에 배치. 메모 키티 이미지 속 흰색 종이 위에
+         실제 입력 가능한 textarea를 겹쳐서, 키티가 들고 있는 종이에 직접 메모를 적는 것처럼 보이게 함 -->
+    <section class="memo-section">
+      <h2 class="section-title">📝 메모</h2>
+      <div class="memo-kitty">
+        <img class="memo-kitty-img" src="css/메모 키티.png" alt="메모 키티" />
+        <textarea
+          id="memo-input"
+          class="memo-input"
+          placeholder="자유롭게 메모해보세요 :)"
+        ></textarea>
+      </div>
+    </section>
   </div>
 
   <script src="js/app.js"></script>

@@ -90,6 +90,13 @@
  *       D-Day 대신 "근무: 월·수" 형태의 근무 요일 뱃지를 보여주기
  *   37) "🍎 내 일정" 카드 배경 색상을 카테고리별로 구분하기
  *       (학과: 빨간색 / 아르바이트: 노란색 / 개인: 데님 파란색)
+ *
+ * 이번 단계(T18)에서 새로 추가한 내용:
+ *   38) Main Container 가장 아래쪽에 "📝 메모" 영역 추가: 메모 키티 이미지(css/메모 키티.png)
+ *       속 흰색 종이 위에 실제 입력 가능한 textarea를 겹쳐서, 키티가 들고 있는 종이에 직접
+ *       메모를 적는 것처럼 보이게 하기
+ *   39) 메모 내용을 입력할 때마다 잠시 뒤(디바운스) 브라우저(localStorage)에 자동 저장하고,
+ *       페이지를 새로고침하거나 다시 열었을 때 저장된 메모를 그대로 불러오기
  */
 
 // 할 일 카드에서 메모를 기본으로 보여줄 최대 글자 수 (이보다 길면 "더보기"로 축약)
@@ -119,6 +126,9 @@ const SCHEDULE_STORAGE_KEY = "smart-campus-planner-schedule";
 // 브라우저에 할 일 목록을 저장할 때 사용하는 저장소 키(이름표) 입니다.
 // 다른 데이터와 섞이지 않도록 이 앱만의 고유한 이름을 사용합니다.
 const STORAGE_KEY = "smart-campus-planner-todos";
+
+// 메모(T18) 내용을 저장할 때 사용하는 브라우저 저장소 키
+const MEMO_STORAGE_KEY = "smart-campus-planner-memo";
 
 // ===== 캘린더 스티커 꾸미기 (T12) =====
 // "css/키티 표정" 폴더에 있는 키티 표정 이미지들을 캘린더 날짜 칸의 스티커로 사용합니다.
@@ -256,6 +266,33 @@ function saveSchedule() {
   }
 }
 
+/**
+ * 브라우저 저장소(localStorage)에서 저장되어 있던 메모(T18) 내용을 불러옵니다.
+ * 저장된 데이터가 없거나 형식이 올바르지 않으면 빈 문자열("")을 반환합니다.
+ * @returns {string} 불러온 메모 내용
+ */
+function loadMemo() {
+  try {
+    const raw = localStorage.getItem(MEMO_STORAGE_KEY);
+    return typeof raw === "string" ? raw : "";
+  } catch (error) {
+    console.warn("저장된 메모를 불러오는 중 문제가 발생하여 빈 메모로 시작합니다.", error);
+    return "";
+  }
+}
+
+/**
+ * 현재 메모 내용을 브라우저 저장소(localStorage)에 저장합니다.
+ * @param {string} memoText 저장할 메모 내용
+ */
+function saveMemo(memoText) {
+  try {
+    localStorage.setItem(MEMO_STORAGE_KEY, memoText);
+  } catch (error) {
+    console.warn("메모를 저장하는 중 문제가 발생했습니다.", error);
+  }
+}
+
 // 할 일 목록을 담아두는 배열
 // 페이지가 열릴 때 브라우저에 저장되어 있던 데이터를 먼저 불러옵니다.
 let todos = loadTodos();
@@ -285,6 +322,9 @@ const todoListEl = document.getElementById("todo-list");
 const emptyStateEl = document.getElementById("empty-state");
 const progressTextEl = document.getElementById("progress-text");
 const progressBarFillEl = document.getElementById("progress-bar-fill");
+
+// 메모(T18) 관련 화면 요소 가져오기
+const memoInputEl = document.getElementById("memo-input");
 
 // 시간표 관련 화면 요소 가져오기
 const scheduleForm = document.getElementById("schedule-form");
@@ -1213,6 +1253,27 @@ calendarStickerSelectEls.forEach((selectEl) => {
     renderCalendar();
   });
 });
+
+// ===== 메모 (T18) =====
+
+// 메모 내용을 입력할 때마다 매번 저장하면 너무 자주 저장소에 접근하게 되므로,
+// 타이핑을 멈춘 뒤 잠시(디바운스) 기다렸다가 한 번만 저장합니다.
+let memoSaveTimerId = null;
+const MEMO_SAVE_DEBOUNCE_MS = 400;
+
+if (memoInputEl) {
+  // 페이지가 열릴 때 저장되어 있던 메모를 textarea에 그대로 복원합니다.
+  memoInputEl.value = loadMemo();
+
+  memoInputEl.addEventListener("input", () => {
+    if (memoSaveTimerId) {
+      clearTimeout(memoSaveTimerId);
+    }
+    memoSaveTimerId = setTimeout(() => {
+      saveMemo(memoInputEl.value);
+    }, MEMO_SAVE_DEBOUNCE_MS);
+  });
+}
 
 // 페이지가 처음 열렸을 때 화면 초기 상태 그리기 (저장된 데이터가 있으면 그대로 복원)
 renderCalendarStickerSettings();

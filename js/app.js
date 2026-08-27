@@ -69,9 +69,27 @@
  *       이미지를 글자별로 이어붙여 보여주기 (해당 폴더에 이미지가 없는 "+"나 "지남"이 포함된
  *       마감이 지난 경우는 기존처럼 텍스트로 표시)
  *
- * 이번 단계(T15)에서 새로 추가/개선한 내용:
+ * T15에서 만든 기능 (그대로 유지):
  *   31) 할 일 목록 카드(<ul id="todo-list">)에서는 마감일 뱃지만 보여주고, D-Day 뱃지는
- *       더 이상 표시하지 않기 (D-Day는 시간표 아래 "마감 임박 학과 일정" 요약 카드에서만 확인)
+ *       더 이상 표시하지 않기 (D-Day는 시간표 아래 "🍎 내 일정" 요약 카드에서만 확인)
+ *
+ * 이번 단계(T16)에서 새로 추가/개선한 내용:
+ *   32) "⏰ 마감 임박 학과 일정" 섹션 제목을 "🍎 내 일정"으로 변경
+ *   33) 일정 카드(.upcoming-list)를 세로 1열 목록에서 2열 그리드 레이아웃으로 변경해
+ *       PC/태블릿에서는 카드 2개가 나란히, 모바일(700px 이하)에서는 1열로 보이게 하기
+ *       (일정 데이터/추가/삭제/D-Day 계산 등 기존 기능과 렌더링 로직(renderUpcoming)은
+ *       변경 없이 그대로 유지하고, css/style.css의 레이아웃만 수정)
+ *   34) 일정 제목이 길어도 카드가 깨지지 않도록 최대 2줄까지만 보여주고 넘치면
+ *       말줄임표(...)로 표시하며, D-Day 뱃지는 항상 카드 오른쪽에 고정 크기로 유지하기
+ *
+ * 이번 단계(T17)에서 새로 추가/개선한 내용:
+ *   35) "🍎 내 일정" 카드에 표시하는 대상을 "카테고리가 학과이고 마감이 3일 이내인 것"에서
+ *       "카테고리와 관계없이 완료하지 않았고 마감일이 있거나(학과/개인), 근무 요일이 있는
+ *       (아르바이트) 모든 일정"으로 확장하기 (renderUpcoming)
+ *   36) 마감일이 있는 일정은 기존처럼 D-Day 뱃지를, 근무 요일만 있는 아르바이트 일정은
+ *       D-Day 대신 "근무: 월·수" 형태의 근무 요일 뱃지를 보여주기
+ *   37) "🍎 내 일정" 카드 배경 색상을 카테고리별로 구분하기
+ *       (학과: 빨간색 / 아르바이트: 노란색 / 개인: 데님 파란색)
  */
 
 // 할 일 카드에서 메모를 기본으로 보여줄 최대 글자 수 (이보다 길면 "더보기"로 축약)
@@ -555,17 +573,43 @@ function deleteScheduleItem(id) {
 }
 
 /**
- * 카테고리가 '학과'이고 마감일이 3일 이내(오늘 포함, 지난 것 포함)로 임박한 할 일을 찾아
- * '마감 임박 학과 일정' 요약 카드로 화면에 보여줍니다.
+ * 할 일의 카테고리(학과/아르바이트/개인)에 맞는 "🍎 내 일정" 카드 배경 색상 클래스를 반환합니다.
+ * - 학과: 빨간색 계열 / 아르바이트: 노란색 계열 / 개인: 데님(파란색) 계열
+ * @param {string} category 할 일 카테고리
+ * @returns {string} 카드에 추가할 CSS 클래스 이름
+ */
+function getUpcomingCardCategoryClass(category) {
+  if (category === "학과") {
+    return "upcoming-card-category-school";
+  }
+  if (category === "아르바이트") {
+    return "upcoming-card-category-parttime";
+  }
+  return "upcoming-card-category-personal";
+}
+
+/**
+ * 완료되지 않은 할 일 중 마감일이 있거나(학과/개인), 근무 요일이 있는(아르바이트) 항목을
+ * 모두 모아 카테고리와 관계없이 '🍎 내 일정' 카드로 화면에 보여줍니다.
+ * - 마감일이 있는 할 일은 D-Day 뱃지를, 근무 요일만 있는 아르바이트는 근무 요일 뱃지를 보여줍니다.
+ * - 마감일이 있는 항목은 D-Day가 빠른(더 임박하거나 더 많이 지난) 순으로 정렬하고,
+ *   근무 요일만 있는 아르바이트 항목은 뒤쪽에 모아서 보여줍니다.
  */
 function renderUpcoming() {
   upcomingListEl.innerHTML = "";
 
   const upcomingItems = todos
-    .filter((todo) => todo.category === "학과" && !todo.completed && todo.dueDate)
-    .map((todo) => ({ todo, dDayInfo: getDDayInfo(todo.dueDate) }))
-    .filter(({ dDayInfo }) => dDayInfo && dDayInfo.diffDays <= 3)
-    .sort((a, b) => a.dDayInfo.diffDays - b.dDayInfo.diffDays);
+    .filter(
+      (todo) =>
+        !todo.completed &&
+        (todo.dueDate || (todo.category === "아르바이트" && todo.workDays && todo.workDays.length > 0))
+    )
+    .map((todo) => ({ todo, dDayInfo: todo.dueDate ? getDDayInfo(todo.dueDate) : null }))
+    .sort((a, b) => {
+      const aKey = a.dDayInfo ? a.dDayInfo.diffDays : Number.POSITIVE_INFINITY;
+      const bKey = b.dDayInfo ? b.dDayInfo.diffDays : Number.POSITIVE_INFINITY;
+      return aKey - bKey;
+    });
 
   if (upcomingItems.length === 0) {
     upcomingEmptyStateEl.classList.remove("hidden");
@@ -576,18 +620,25 @@ function renderUpcoming() {
 
   upcomingItems.forEach(({ todo, dDayInfo }) => {
     const card = document.createElement("div");
-    card.className = "upcoming-card upcoming-card-" + dDayInfo.state;
+    card.className = "upcoming-card " + getUpcomingCardCategoryClass(todo.category);
 
     const titleEl = document.createElement("span");
     titleEl.className = "upcoming-card-title";
     titleEl.textContent = (todo.type ? `[${todo.type}] ` : "") + todo.title;
-
-    const dDayEl = document.createElement("span");
-    dDayEl.className = "badge badge-dday-" + dDayInfo.state;
-    fillDDayBadgeContent(dDayEl, dDayInfo.label);
-
     card.appendChild(titleEl);
-    card.appendChild(dDayEl);
+
+    if (dDayInfo) {
+      const dDayEl = document.createElement("span");
+      dDayEl.className = "badge badge-dday-" + dDayInfo.state;
+      fillDDayBadgeContent(dDayEl, dDayInfo.label);
+      card.appendChild(dDayEl);
+    } else if (todo.workDays && todo.workDays.length > 0) {
+      const workDaysEl = document.createElement("span");
+      workDaysEl.className = "badge badge-workdays";
+      workDaysEl.textContent = "근무: " + todo.workDays.join("·");
+      card.appendChild(workDaysEl);
+    }
+
     upcomingListEl.appendChild(card);
   });
 }

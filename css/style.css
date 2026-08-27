@@ -5,6 +5,14 @@
   --color-red-dark: #b81f34;
   --color-red-light: #ffe0e6;
   --color-red-soft: #fff0f3;
+
+  /* "🍎 내 일정" 카드를 카테고리별로 구분하는 색상: 아르바이트(노란색)/개인(데님, 파란색) 계열 */
+  --color-yellow: #e0a930;
+  --color-yellow-light: #fff3d6;
+  --color-yellow-soft: #fffaef;
+  --color-denim: #35618f;
+  --color-denim-light: #dce8f5;
+  --color-denim-soft: #eef4fa;
 }
 
 /* ===== 기본 레이아웃 ===== */
@@ -294,17 +302,20 @@ body {
   margin-bottom: 20px;
 }
 
+/* 일정 카드를 한 줄에 2개씩(PC/태블릿) 배치하는 2열 그리드. 화면이 좁아지면(모바일) 1열로 변경됩니다. */
 .upcoming-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
 }
 
+/* 카드 하나가 부모 컨테이너 전체 너비(100%)를 차지하지 않고, 그리드 열 너비(약 50%)만큼만 차지합니다. */
 .upcoming-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-width: 0; /* flex/grid 안에서 긴 텍스트가 카드를 넘치게 하지 않도록 함 */
   padding: 10px 12px;
   border-radius: 10px;
   background-color: #f8f9fc;
@@ -314,16 +325,42 @@ body {
 .upcoming-card-title {
   font-size: 13px;
   color: #333;
+  flex: 1 1 auto;
+  min-width: 0;
+  /* 제목이 길어져도 카드가 깨지지 않도록 최대 2줄까지만 보여주고, 넘치면 말줄임표(...)로 표시 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   word-break: break-all;
 }
 
-.upcoming-card-urgent {
+/* D-Day 뱃지는 제목 길이와 관계없이 카드 오른쪽에 고정된 크기로 표시됩니다. */
+.upcoming-card .badge {
+  flex: 0 0 auto;
+}
+
+/* 카테고리별 카드 색상: 학과(빨간색) / 아르바이트(노란색) / 개인(데님, 파란색) */
+.upcoming-card-category-school {
   background-color: var(--color-red-soft);
   border-color: var(--color-red-light);
 }
 
-.upcoming-card-overdue {
-  background-color: #f4f5f8;
+.upcoming-card-category-parttime {
+  background-color: var(--color-yellow-soft);
+  border-color: var(--color-yellow-light);
+}
+
+.upcoming-card-category-personal {
+  background-color: var(--color-denim-soft);
+  border-color: var(--color-denim-light);
+}
+
+/* 화면이 좁은 모바일에서는 일정 카드를 1열로 보여줍니다. */
+@media (max-width: 700px) {
+  .upcoming-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ===== 할 일 추가 폼 ===== */

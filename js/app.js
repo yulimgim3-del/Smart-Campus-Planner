@@ -64,10 +64,14 @@
  *   29) 카테고리가 '아르바이트'일 때는 중요도(상/중/하)가 필요 없다고 판단하여
  *       중요도 선택 필드를 숨기고, 저장/뱃지 표시에서도 제외하기
  *
- * 이번 단계(T14)에서 새로 추가/개선한 내용:
+ * T14에서 만든 기능 (그대로 유지):
  *   30) D-Day 뱃지(D-7, D-Day 등)를 일반 텍스트 대신 "css/키티 숫자" 폴더의 숫자/문자 키티
  *       이미지를 글자별로 이어붙여 보여주기 (해당 폴더에 이미지가 없는 "+"나 "지남"이 포함된
  *       마감이 지난 경우는 기존처럼 텍스트로 표시)
+ *
+ * 이번 단계(T15)에서 새로 추가/개선한 내용:
+ *   31) 할 일 목록 카드(<ul id="todo-list">)에서는 마감일 뱃지만 보여주고, D-Day 뱃지는
+ *       더 이상 표시하지 않기 (D-Day는 시간표 아래 "마감 임박 학과 일정" 요약 카드에서만 확인)
  */
 
 // 할 일 카드에서 메모를 기본으로 보여줄 최대 글자 수 (이보다 길면 "더보기"로 축약)
@@ -934,14 +938,8 @@ function createTodoItemElement(todo) {
     dueDateBadge.textContent = "마감일: " + todo.dueDate;
     metaWrap.appendChild(dueDateBadge);
 
-    // 마감일이 있으면 D-Day 뱃지도 함께 보여줍니다. (완료된 할 일은 D-Day를 강조하지 않음)
-    const dDayInfo = getDDayInfo(todo.dueDate);
-    if (dDayInfo && !todo.completed) {
-      const dDayBadge = document.createElement("span");
-      dDayBadge.className = "badge badge-dday-" + dDayInfo.state;
-      fillDDayBadgeContent(dDayBadge, dDayInfo.label);
-      metaWrap.appendChild(dDayBadge);
-    }
+    // 할 일 목록 카드에는 마감일만 보여주고, D-Day 뱃지는 표시하지 않습니다.
+    // (D-Day는 시간표 아래 "마감 임박 학과 일정" 요약 카드(renderUpcoming)에서만 보여줍니다)
   }
 
   // 카테고리가 '아르바이트'이고 근무 요일이 지정되어 있으면 근무 요일 뱃지를 보여줍니다.

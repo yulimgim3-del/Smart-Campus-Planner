@@ -874,7 +874,8 @@ body {
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-/* 날짜 칸 오른쪽 위에 얹는 키티 표정 스티커 (마감 지남/임박/여유/없음 상태별로 다르게 표시) */
+/* 날짜 칸 오른쪽 위에 얹는 키티 표정 스티커 (마감 지남/임박/여유/없음/개인 상태별로 다르게 표시).
+   기본 크기는 "냠냠 키티" 기준으로 맞춰져 있습니다. */
 .calendar-day-sticker {
   position: absolute;
   top: 1px;
@@ -883,6 +884,44 @@ body {
   height: 28px;
   object-fit: contain;
   pointer-events: none;
+}
+
+/* 각 키티 이미지(css/키티 표정 폴더)는 2000x2000 캔버스 안에서 캐릭터가 차지하는
+   실제 비율이 서로 달라, 모두 같은 크기로 표시하면 눈에 보이는 캐릭터 크기가 다르게 보입니다.
+   "냠냠 키티"가 보여지는 크기를 기준으로 다른 스티커들의 컨테이너 크기를 보정했습니다. */
+.calendar-day-sticker[data-sticker="냠냠키티"] {
+  width: 28px;
+  height: 28px;
+}
+
+.calendar-day-sticker[data-sticker="사랑키티"] {
+  width: 27px;
+  height: 27px;
+}
+
+.calendar-day-sticker[data-sticker="우울키티"] {
+  width: 27px;
+  height: 27px;
+}
+
+.calendar-day-sticker[data-sticker="감기키티"] {
+  width: 35px;
+  height: 35px;
+}
+
+.calendar-day-sticker[data-sticker="울음키티"] {
+  width: 41px;
+  height: 41px;
+}
+
+.calendar-day-sticker[data-sticker="안경키티"] {
+  width: 25px;
+  height: 25px;
+}
+
+.calendar-day-sticker[data-sticker="잠자는 키티"] {
+  width: 25px;
+  height: 25px;
 }
 
 .calendar-day-cell:not(.calendar-day-empty):hover {

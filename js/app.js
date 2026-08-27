@@ -862,6 +862,11 @@ function renderCalendar() {
       stickerEl.className = "calendar-day-sticker";
       stickerEl.src = stickerSrc;
       stickerEl.alt = stickerValue;
+      // 각 키티 이미지는 2000x2000 캔버스 안에서 캐릭터가 차지하는 실제 비율이 서로 달라,
+      // 같은 크기의 <img>로 표시하면 스티커마다 눈에 보이는 캐릭터 크기가 달라 보입니다.
+      // data-sticker 속성에 값을 담아두고, css/style.css에서 스티커별로 컨테이너 크기를
+      // 다르게 지정해 냠냠 키티를 기준으로 시각적 크기를 맞춥니다.
+      stickerEl.dataset.sticker = stickerValue;
       dayCell.appendChild(stickerEl);
     }
 

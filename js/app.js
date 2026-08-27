@@ -111,6 +111,14 @@
  *       "개인"일 때만 할 일 등록 폼에 "캘린더 스티커" select가 나타나고, 완료하지 않은 개인
  *       일정이 여러 개 있는 날짜는 그중 먼저 등록된 일정의 스티커를 표시함
  *   43) 할 일 목록 카드에도 지정된 캘린더 스티커를 작은 이미지 뱃지로 함께 보여주기
+ *
+ * 이번 단계(T21)에서 추가한 내용:
+ *   44) 할 일마다 시간을 함께 기입할 수 있게 하기
+ *       - 카테고리가 학과/개인일 때: 마감일 옆에 "마감 시간"(선택 입력, HH:MM) 필드 추가
+ *       - 카테고리가 아르바이트일 때: 근무 요일 옆에 "근무 시작~종료 시간"(선택 입력) 필드 추가
+ *   45) 할 일 목록 카드의 마감일/근무 요일 뱃지, "🍎 내 일정" 요약 카드, 캘린더 날짜 클릭
+ *       상세 일정에도 입력한 시간을 함께 표시하기 (시간을 입력하지 않은 기존 할 일도
+ *       오류 없이 그대로 표시됨)
  */
 
 // 할 일 카드에서 메모를 기본으로 보여줄 최대 글자 수 (이보다 길면 "더보기"로 축약)
@@ -296,8 +304,13 @@ const todoPriorityField = document.getElementById("todo-priority-field");
 const todoPrioritySelect = document.getElementById("todo-priority-select");
 const todoDueDateField = document.getElementById("todo-due-date-field");
 const todoDueDateInput = document.getElementById("todo-due-date-input");
+const todoDueTimeField = document.getElementById("todo-due-time-field");
+const todoDueTimeInput = document.getElementById("todo-due-time-input");
 const todoWorkdaysField = document.getElementById("todo-workdays-field");
 const todoWorkdayCheckboxes = document.querySelectorAll(".todo-workday-checkbox");
+const todoWorktimeField = document.getElementById("todo-worktime-field");
+const todoWorkStartTimeInput = document.getElementById("todo-work-start-time-input");
+const todoWorkEndTimeInput = document.getElementById("todo-work-end-time-input");
 const todoPersonalStickerField = document.getElementById("todo-personal-sticker-field");
 const todoPersonalStickerSelect = document.getElementById("todo-personal-sticker-select");
 const todoMemoInput = document.getElementById("todo-memo-input");
@@ -363,21 +376,28 @@ function updatePriorityFieldVisibility() {
 }
 
 /**
- * 카테고리 선택값에 따라 '마감일' 필드와 '근무 요일' 필드를 서로 바꿔가며 보여줍니다.
- * 카테고리가 '아르바이트'일 때는 마감일 대신 근무 요일(월~일, 중복 선택 가능)을 지정합니다.
+ * 카테고리 선택값에 따라 '마감일(+마감 시간)' 필드와 '근무 요일(+근무 시간)' 필드를
+ * 서로 바꿔가며 보여줍니다.
+ * 카테고리가 '아르바이트'일 때는 마감일 대신 근무 요일(월~일, 중복 선택 가능)과
+ * 근무 시작~종료 시간(선택 입력)을 지정합니다.
  */
 function updateDueDateOrWorkdaysVisibility() {
   const isPartTimeCategory = todoCategorySelect.value === "아르바이트";
   todoDueDateField.classList.toggle("hidden", isPartTimeCategory);
+  todoDueTimeField.classList.toggle("hidden", isPartTimeCategory);
   todoWorkdaysField.classList.toggle("hidden", !isPartTimeCategory);
+  todoWorktimeField.classList.toggle("hidden", !isPartTimeCategory);
 
-  // 마감일 필드가 숨겨지면 입력값도 함께 초기화해, 다른 카테고리로 잘못 저장되지 않도록 합니다.
+  // 마감일(+시간) 필드가 숨겨지면 입력값도 함께 초기화해, 다른 카테고리로 잘못 저장되지 않도록 합니다.
   if (isPartTimeCategory) {
     todoDueDateInput.value = "";
+    todoDueTimeInput.value = "";
   } else {
     todoWorkdayCheckboxes.forEach((checkbox) => {
       checkbox.checked = false;
     });
+    todoWorkStartTimeInput.value = "";
+    todoWorkEndTimeInput.value = "";
   }
 }
 
@@ -415,6 +435,25 @@ updateTypeFieldVisibility();
 updatePriorityFieldVisibility();
 updateDueDateOrWorkdaysVisibility();
 updatePersonalStickerFieldVisibility();
+
+/**
+ * 아르바이트 할 일의 근무 시작~종료 시간을 뱃지 등에 덧붙일 문자열로 만들어 반환합니다.
+ * 시작/종료 시간이 둘 다 있으면 " 14:00~18:00" 형태로, 하나만 있으면 그 값만, 둘 다 없으면
+ * 빈 문자열을 반환합니다. (근무 요일 뒤에 이어붙여서 사용)
+ * @param {object} todo 할 일 데이터 (workStartTime, workEndTime 필드를 사용)
+ * @returns {string} 시간 표시 문자열 (앞에 공백 포함, 없으면 빈 문자열)
+ */
+function formatWorkTimeSuffix(todo) {
+  const start = todo.workStartTime || "";
+  const end = todo.workEndTime || "";
+  if (start && end) {
+    return ` ${start}~${end}`;
+  }
+  if (start || end) {
+    return ` ${start || end}`;
+  }
+  return "";
+}
 
 /**
  * 마감일(YYYY-MM-DD)을 기준으로 오늘까지 남은 일수를 계산해 D-Day 정보를 반환합니다.
@@ -674,6 +713,14 @@ function renderUpcoming() {
     titleEl.textContent = (todo.type ? `[${todo.type}] ` : "") + todo.title;
     card.appendChild(titleEl);
 
+    // 마감 시간이 있으면 제목 아래에 작게 보여줍니다 (예: "🕐 14:00").
+    if (todo.dueTime) {
+      const timeEl = document.createElement("span");
+      timeEl.className = "upcoming-card-time";
+      timeEl.textContent = "🕐 " + todo.dueTime;
+      card.appendChild(timeEl);
+    }
+
     if (dDayInfo) {
       const dDayEl = document.createElement("span");
       dDayEl.className = "badge badge-dday-" + dDayInfo.state;
@@ -682,7 +729,7 @@ function renderUpcoming() {
     } else if (todo.workDays && todo.workDays.length > 0) {
       const workDaysEl = document.createElement("span");
       workDaysEl.className = "badge badge-workdays";
-      workDaysEl.textContent = "근무: " + todo.workDays.join("·");
+      workDaysEl.textContent = "근무: " + todo.workDays.join("·") + formatWorkTimeSuffix(todo);
       card.appendChild(workDaysEl);
     }
 
@@ -920,9 +967,13 @@ function renderCalendarDetail() {
     const item = document.createElement("li");
     item.className = "calendar-detail-item";
 
+    // 아르바이트는 근무 시작~종료 시간을, 학과/개인은 마감 시간을 제목 앞에 함께 보여줍니다.
+    const timePrefix = isWorkday ? formatWorkTimeSuffix(todo).trim() : todo.dueTime || "";
+
     const titleEl = document.createElement("span");
     titleEl.className = "calendar-detail-item-title";
-    titleEl.textContent = (todo.type ? `[${todo.type}] ` : "") + todo.title;
+    titleEl.textContent =
+      (timePrefix ? `[${timePrefix}] ` : "") + (todo.type ? `[${todo.type}] ` : "") + todo.title;
 
     const badgeEl = document.createElement("span");
     if (isWorkday) {
@@ -1072,7 +1123,8 @@ function createTodoItemElement(todo) {
   if (todo.dueDate) {
     const dueDateBadge = document.createElement("span");
     dueDateBadge.className = "badge badge-due-date";
-    dueDateBadge.textContent = "마감일: " + todo.dueDate;
+    // 마감 시간이 지정되어 있으면 "마감일: 2025-01-01 14:00" 형태로 함께 보여줍니다.
+    dueDateBadge.textContent = "마감일: " + todo.dueDate + (todo.dueTime ? ` ${todo.dueTime}` : "");
     metaWrap.appendChild(dueDateBadge);
 
     // 할 일 목록 카드에는 마감일만 보여주고, D-Day 뱃지는 표시하지 않습니다.
@@ -1083,7 +1135,8 @@ function createTodoItemElement(todo) {
   if (todo.workDays && todo.workDays.length > 0) {
     const workDaysBadge = document.createElement("span");
     workDaysBadge.className = "badge badge-workdays";
-    workDaysBadge.textContent = "근무: " + todo.workDays.join("·");
+    // 근무 시작~종료 시간이 지정되어 있으면 "근무: 월·수 14:00~18:00" 형태로 함께 보여줍니다.
+    workDaysBadge.textContent = "근무: " + todo.workDays.join("·") + formatWorkTimeSuffix(todo);
     metaWrap.appendChild(workDaysBadge);
   }
 
@@ -1139,6 +1192,16 @@ function renderProgress() {
 }
 
 /**
+ * HH:MM 형식의 시간 문자열이 올바른 형식인지 확인합니다.
+ * <input type="time">에서 나온 값이 아니거나 형식이 이상하면 빈 문자열로 취급합니다.
+ * @param {string} time 검증할 시간 문자열
+ * @returns {string} 유효하면 그대로, 아니면 빈 문자열
+ */
+function resolveTimeValue(time) {
+  return typeof time === "string" && /^\d{2}:\d{2}$/.test(time) ? time : "";
+}
+
+/**
  * 새로운 할 일을 목록에 추가합니다.
  * @param {object} params 할 일 입력 정보
  * @param {string} params.title 할 일 제목
@@ -1146,11 +1209,26 @@ function renderProgress() {
  * @param {string} params.type 유형 (과제 / 시험 / 발표 / 팀플 / 기타, 카테고리가 '학과'일 때만 의미 있음)
  * @param {string} params.priority 중요도 (상 / 중 / 하, 카테고리가 '아르바이트'가 아닐 때만 의미 있음)
  * @param {string} params.dueDate 마감일 (YYYY-MM-DD 형식 문자열, 카테고리가 '아르바이트'가 아닐 때만 의미 있음)
+ * @param {string} params.dueTime 마감 시간 (HH:MM 형식, 선택 입력, 카테고리가 '아르바이트'가 아닐 때만 의미 있음)
  * @param {string[]} params.workDays 근무 요일 목록 (카테고리가 '아르바이트'일 때만 의미 있음)
+ * @param {string} params.workStartTime 근무 시작 시간 (HH:MM 형식, 선택 입력, 카테고리가 '아르바이트'일 때만 의미 있음)
+ * @param {string} params.workEndTime 근무 종료 시간 (HH:MM 형식, 선택 입력, 카테고리가 '아르바이트'일 때만 의미 있음)
  * @param {string} params.personalSticker 캘린더 스티커 (냠냠/사랑/감기 키티, 카테고리가 '개인'일 때만 의미 있음)
  * @param {string} params.memo 메모 (선택 입력, 비어있어도 할 일 등록에는 문제 없음)
  */
-function addTodo({ title, category, type, priority, dueDate, workDays, personalSticker, memo }) {
+function addTodo({
+  title,
+  category,
+  type,
+  priority,
+  dueDate,
+  dueTime,
+  workDays,
+  workStartTime,
+  workEndTime,
+  personalSticker,
+  memo,
+}) {
   const trimmedTitle = title.trim();
   if (trimmedTitle === "") {
     return; // 빈 값은 추가하지 않음
@@ -1168,9 +1246,14 @@ function addTodo({ title, category, type, priority, dueDate, workDays, personalS
   const isPartTimeCategory = category === "아르바이트";
   const resolvedPriority = isPartTimeCategory ? "" : priority;
   const resolvedDueDate = isPartTimeCategory ? "" : dueDate || "";
+  // 마감 시간은 마감일이 있을 때만 의미가 있으므로, 마감일이 없으면 시간도 저장하지 않습니다.
+  const resolvedDueTime = isPartTimeCategory || !resolvedDueDate ? "" : resolveTimeValue(dueTime);
   const resolvedWorkDays = isPartTimeCategory
     ? (workDays || []).filter((day) => WORK_DAYS.includes(day))
     : [];
+  // 근무 시작/종료 시간은 선택 입력이며, 카테고리가 '아르바이트'일 때만 저장합니다.
+  const resolvedWorkStartTime = isPartTimeCategory ? resolveTimeValue(workStartTime) : "";
+  const resolvedWorkEndTime = isPartTimeCategory ? resolveTimeValue(workEndTime) : "";
 
   // 카테고리가 '개인'일 때만 캘린더 스티커(냠냠/사랑/감기 키티)를 저장합니다.
   // 유효하지 않은 값이 들어오면 기본값(냠냠 키티)으로 저장합니다.
@@ -1189,7 +1272,10 @@ function addTodo({ title, category, type, priority, dueDate, workDays, personalS
     type: resolvedType,
     priority: resolvedPriority,
     dueDate: resolvedDueDate,
+    dueTime: resolvedDueTime,
     workDays: resolvedWorkDays,
+    workStartTime: resolvedWorkStartTime,
+    workEndTime: resolvedWorkEndTime,
     personalSticker: resolvedPersonalSticker,
     memo: trimmedMemo,
     completed: false,
@@ -1234,7 +1320,10 @@ todoForm.addEventListener("submit", (event) => {
     type: todoTypeSelect.value,
     priority: todoPrioritySelect.value,
     dueDate: todoDueDateInput.value,
+    dueTime: todoDueTimeInput.value,
     workDays: checkedWorkDays,
+    workStartTime: todoWorkStartTimeInput.value,
+    workEndTime: todoWorkEndTimeInput.value,
     personalSticker: todoPersonalStickerSelect.value,
     memo: todoMemoInput.value,
   });
@@ -1242,6 +1331,9 @@ todoForm.addEventListener("submit", (event) => {
   // 입력창 초기화 (카테고리/중요도/캘린더 스티커는 마지막 선택값을 유지해 연속 입력을 편하게 함)
   todoTitleInput.value = "";
   todoDueDateInput.value = "";
+  todoDueTimeInput.value = "";
+  todoWorkStartTimeInput.value = "";
+  todoWorkEndTimeInput.value = "";
   todoMemoInput.value = "";
   todoWorkdayCheckboxes.forEach((checkbox) => {
     checkbox.checked = false;

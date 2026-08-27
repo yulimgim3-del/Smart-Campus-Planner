@@ -340,6 +340,14 @@ body {
   flex: 0 0 auto;
 }
 
+/* 마감 시간(선택 입력)을 D-Day 뱃지 옆에 작게 보여줍니다. */
+.upcoming-card-time {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: #7a7f8c;
+  white-space: nowrap;
+}
+
 /* 카테고리별 카드 색상: 학과(빨간색) / 아르바이트(노란색) / 개인(데님, 파란색) */
 .upcoming-card-category-school {
   background-color: var(--color-red-soft);
@@ -420,7 +428,8 @@ body {
 }
 
 .todo-select,
-.todo-date-input {
+.todo-date-input,
+.todo-time-input {
   padding: 8px 10px;
   font-size: 13px;
   border: 1px solid #d9dce3;
@@ -432,8 +441,30 @@ body {
 }
 
 .todo-select:focus,
-.todo-date-input:focus {
+.todo-date-input:focus,
+.todo-time-input:focus {
   border-color: var(--color-red);
+}
+
+/* ===== 아르바이트 근무 시간 (시작~종료, 선택 입력) ===== */
+.todo-form-field-worktime {
+  flex: 1 1 100%;
+}
+
+.worktime-input-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.worktime-input-group .todo-time-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.worktime-separator {
+  font-size: 13px;
+  color: #7a7f8c;
 }
 
 .todo-form-field-memo {

@@ -232,6 +232,12 @@
             <input type="date" id="todo-due-date-input" class="todo-date-input" />
           </label>
 
+          <!-- 카테고리가 '아르바이트'가 아닐 때(학과/개인)만 보이는 마감 시간 필드 (선택 입력) -->
+          <label class="todo-form-field" id="todo-due-time-field">
+            <span class="field-label">마감 시간 (선택)</span>
+            <input type="time" id="todo-due-time-input" class="todo-time-input" />
+          </label>
+
           <!-- 카테고리가 '아르바이트'일 때만 보이는 근무 요일 체크박스 필드 -->
           <div class="todo-form-field todo-form-field-workdays" id="todo-workdays-field">
             <span class="field-label">근무 요일</span>
@@ -257,6 +263,16 @@
               <label class="workday-checkbox-label">
                 <input type="checkbox" class="todo-workday-checkbox" value="일" />일
               </label>
+            </div>
+          </div>
+
+          <!-- 카테고리가 '아르바이트'일 때만 보이는 근무 시작/종료 시간 필드 (선택 입력) -->
+          <div class="todo-form-field todo-form-field-worktime" id="todo-worktime-field">
+            <span class="field-label">근무 시간 (선택)</span>
+            <div class="worktime-input-group">
+              <input type="time" id="todo-work-start-time-input" class="todo-time-input" />
+              <span class="worktime-separator">~</span>
+              <input type="time" id="todo-work-end-time-input" class="todo-time-input" />
             </div>
           </div>
 

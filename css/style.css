@@ -67,18 +67,18 @@ body {
 }
 
 .app-exterior-sticker-exclaim {
-  bottom: -16px;
-  left: -14px;
-  width: 44px;
-  height: 44px;
+  bottom: -22px;
+  left: -20px;
+  width: 64px;
+  height: 64px;
   transform: rotate(-8deg);
 }
 
 .app-exterior-sticker-question {
-  bottom: -16px;
-  right: -14px;
-  width: 44px;
-  height: 44px;
+  bottom: -22px;
+  right: -20px;
+  width: 64px;
+  height: 64px;
   transform: rotate(8deg);
 }
 
@@ -159,6 +159,12 @@ body {
   height: 20px;
   object-fit: contain;
   vertical-align: middle;
+}
+
+/* 마감 임박 학과 일정(사과)/월간 캘린더(우유) 제목 옆 아이콘은 다른 아이콘보다 더 크게 표시 */
+.section-title-icon-img-large {
+  width: 32px;
+  height: 32px;
 }
 
 /* ===== 주간 시간표 ===== */
@@ -607,13 +613,13 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 1px;
-  padding: 2px 6px;
+  padding: 3px 6px;
   background-color: transparent;
 }
 
 .dday-char-img {
-  width: 14px;
-  height: 14px;
+  width: 22px;
+  height: 22px;
   object-fit: contain;
   display: inline-block;
 }

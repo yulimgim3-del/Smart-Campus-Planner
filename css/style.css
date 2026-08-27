@@ -50,6 +50,15 @@ body {
   margin-bottom: 24px;
 }
 
+/* 프로그램 이름 위에 배치하는 헬로키티 로고 */
+.app-header-logo-img {
+  display: block;
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  margin: 0 auto 8px;
+}
+
 .app-header-title-row {
   display: flex;
   align-items: center;

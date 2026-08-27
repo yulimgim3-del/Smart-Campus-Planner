@@ -877,10 +877,10 @@ body {
 /* 날짜 칸 오른쪽 위에 얹는 키티 표정 스티커 (마감 지남/임박/여유/없음 상태별로 다르게 표시) */
 .calendar-day-sticker {
   position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 20px;
-  height: 20px;
+  top: 1px;
+  right: 1px;
+  width: 28px;
+  height: 28px;
   object-fit: contain;
   pointer-events: none;
 }

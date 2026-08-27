@@ -759,7 +759,8 @@ body {
   gap: 6px;
 }
 
-.calendar-sticker-preview {
+.calendar-sticker-preview,
+.calendar-fixed-sticker-preview {
   width: 26px;
   height: 26px;
   object-fit: contain;
@@ -770,9 +771,23 @@ body {
   padding: 2px;
 }
 
-.calendar-sticker-select {
+/* 개인 일정 스티커 select(.todo-select)가 미리보기 이미지 옆에서 남은 너비를 채우도록 함 */
+.calendar-sticker-field-control .todo-select {
   flex: 1;
   min-width: 0;
+}
+
+/* 고정 상태 스티커(마감 지남/임박/여유/없음) 미리보기 옆에 붙는 텍스트 라벨.
+   선택할 수 없는 고정 값임을 나타내기 위해 select 대신 일반 텍스트로 보여줍니다. */
+.calendar-sticker-fixed-label {
+  font-size: 13px;
+  color: #555;
+}
+
+/* 개인 일정 스티커 필드를 다른 고정 스티커 필드와 살짝 구분해서 보여줍니다 (데님 포인트 컬러) */
+.calendar-sticker-field-personal .field-label {
+  color: var(--color-denim);
+  font-weight: 600;
 }
 
 .calendar-header {

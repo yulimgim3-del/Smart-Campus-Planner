@@ -97,6 +97,14 @@
  *       메모를 적는 것처럼 보이게 하기
  *   39) 메모 내용을 입력할 때마다 잠시 뒤(디바운스) 브라우저(localStorage)에 자동 저장하고,
  *       페이지를 새로고침하거나 다시 열었을 때 저장된 메모를 그대로 불러오기
+ *
+ * 이번 단계(T19)에서 개편한 내용:
+ *   40) 캘린더 날짜 상태(마감 지남/마감 임박/여유 있음/일정 없음) 스티커를 사용자가 바꿀 수 없는
+ *       고정 값으로 변경 (마감 지남: 우울 키티 / 마감 임박: 울음 키티 / 여유 있음: 안경 키티 /
+ *       일정 없음: 잠자는 키티)
+ *   41) "개인" 카테고리 일정 전용 스티커(냠냠/사랑/감기 키티)를 새로 추가하고, 캘린더 위쪽
+ *       설정 영역에서 사용자가 하나를 골라 쓸 수 있게 하기. 완료하지 않은 개인 일정이 있는
+ *       날짜는 마감 상태와 무관하게 이 개인 스티커가 항상 최우선으로 표시됨
  */
 
 // 할 일 카드에서 메모를 기본으로 보여줄 최대 글자 수 (이보다 길면 "더보기"로 축약)
@@ -130,9 +138,8 @@ const STORAGE_KEY = "smart-campus-planner-todos";
 // 메모(T18) 내용을 저장할 때 사용하는 브라우저 저장소 키
 const MEMO_STORAGE_KEY = "smart-campus-planner-memo";
 
-// ===== 캘린더 스티커 꾸미기 (T12) =====
+// ===== 캘린더 스티커 (T12, T19에서 고정/개인 선택으로 개편) =====
 // "css/키티 표정" 폴더에 있는 키티 표정 이미지들을 캘린더 날짜 칸의 스티커로 사용합니다.
-// 사용자가 각 날짜 상태(overdue/urgent/normal/none)마다 원하는 표정을 골라 꾸밀 수 있습니다.
 const CALENDAR_STICKER_OPTIONS = [
   { value: "울음키티", src: "css/키티 표정/울음키티.png", label: "울음 키티" },
   { value: "우울키티", src: "css/키티 표정/우울키티.png", label: "우울 키티" },
@@ -143,53 +150,58 @@ const CALENDAR_STICKER_OPTIONS = [
   { value: "감기키티", src: "css/키티 표정/감기키티.png", label: "감기 키티" },
 ];
 
-// 날짜 상태별 기본 스티커 매핑
-// - overdue(마감 지남): 울음키티 / urgent(마감 임박, D-3~D-Day): 우울키티
-// - normal(여유 있음, 일정은 있지만 임박하지 않음): 안경키티 / none(일정 없음): 잠자는 키티
-const DEFAULT_CALENDAR_STICKERS = {
-  overdue: "울음키티",
-  urgent: "우울키티",
+// 날짜 상태(마감 지남/마감 임박/여유 있음/일정 없음)별 스티커는 이제 사용자가 바꿀 수 없는 고정 값입니다.
+// - overdue(마감 지남): 우울키티 / urgent(마감 임박): 울음키티
+// - normal(여유 있음): 안경키티 / none(일정 없음): 잠자는 키티
+const FIXED_CALENDAR_STATE_STICKERS = {
+  overdue: "우울키티",
+  urgent: "울음키티",
   normal: "안경키티",
   none: "잠자는 키티",
 };
 
-// 캘린더 스티커 설정을 저장할 때 사용하는 브라우저 저장소 키
-const CALENDAR_STICKER_STORAGE_KEY = "smart-campus-planner-calendar-stickers";
+// "개인" 카테고리 일정이 있는 날짜에 한해서, 사용자가 직접 골라 쓸 수 있는 스티커 목록
+// (냠냠/사랑/감기 키티 중에서 선택). 완료하지 않은 개인 일정이 있는 날짜는 마감 상태와 무관하게
+// 이 스티커가 항상 우선 표시됩니다.
+const PERSONAL_STICKER_OPTIONS = [
+  { value: "냠냠키티", src: "css/키티 표정/냠냠키티.png", label: "냠냠 키티" },
+  { value: "사랑키티", src: "css/키티 표정/사랑키티.png", label: "사랑 키티" },
+  { value: "감기키티", src: "css/키티 표정/감기키티.png", label: "감기 키티" },
+];
+
+// 개인 일정 스티커의 기본값
+const DEFAULT_PERSONAL_STICKER = "냠냠키티";
+
+// 개인 일정 스티커 설정을 저장할 때 사용하는 브라우저 저장소 키
+const PERSONAL_STICKER_STORAGE_KEY = "smart-campus-planner-personal-sticker";
 
 /**
- * 브라우저 저장소(localStorage)에서 저장되어 있던 캘린더 스티커 설정을 불러옵니다.
- * 저장된 값이 없거나 형식이 올바르지 않으면 기본 설정을 반환합니다.
- * @returns {{overdue: string, urgent: string, normal: string, none: string}} 상태별 스티커 값(value)
+ * 브라우저 저장소(localStorage)에서 저장되어 있던 "개인 일정" 스티커 선택값을 불러옵니다.
+ * 저장된 값이 없거나 PERSONAL_STICKER_OPTIONS에 없는 값이면 기본값을 반환합니다.
+ * @returns {string} 선택된 개인 일정 스티커 값 (예: "냠냠키티")
  */
-function loadCalendarStickers() {
+function loadPersonalSticker() {
   try {
-    const raw = localStorage.getItem(CALENDAR_STICKER_STORAGE_KEY);
-    if (!raw) {
-      return { ...DEFAULT_CALENDAR_STICKERS };
+    const raw = localStorage.getItem(PERSONAL_STICKER_STORAGE_KEY);
+    const validValues = PERSONAL_STICKER_OPTIONS.map((option) => option.value);
+    if (raw && validValues.includes(raw)) {
+      return raw;
     }
-    const parsed = JSON.parse(raw);
-    const validValues = CALENDAR_STICKER_OPTIONS.map((option) => option.value);
-    const merged = { ...DEFAULT_CALENDAR_STICKERS };
-    Object.keys(DEFAULT_CALENDAR_STICKERS).forEach((state) => {
-      if (parsed && validValues.includes(parsed[state])) {
-        merged[state] = parsed[state];
-      }
-    });
-    return merged;
+    return DEFAULT_PERSONAL_STICKER;
   } catch (error) {
-    console.warn("저장된 캘린더 스티커 설정을 불러오는 중 문제가 발생하여 기본 설정으로 시작합니다.", error);
-    return { ...DEFAULT_CALENDAR_STICKERS };
+    console.warn("저장된 개인 일정 스티커 설정을 불러오는 중 문제가 발생하여 기본값으로 시작합니다.", error);
+    return DEFAULT_PERSONAL_STICKER;
   }
 }
 
 /**
- * 현재 캘린더 스티커 설정(calendarStickers)을 브라우저 저장소(localStorage)에 저장합니다.
+ * 현재 선택된 "개인 일정" 스티커 값(personalSticker)을 브라우저 저장소(localStorage)에 저장합니다.
  */
-function saveCalendarStickers() {
+function savePersonalSticker() {
   try {
-    localStorage.setItem(CALENDAR_STICKER_STORAGE_KEY, JSON.stringify(calendarStickers));
+    localStorage.setItem(PERSONAL_STICKER_STORAGE_KEY, personalSticker);
   } catch (error) {
-    console.warn("캘린더 스티커 설정을 저장하는 중 문제가 발생했습니다.", error);
+    console.warn("개인 일정 스티커 설정을 저장하는 중 문제가 발생했습니다.", error);
   }
 }
 
@@ -301,9 +313,9 @@ let todos = loadTodos();
 // 페이지가 열릴 때 브라우저에 저장되어 있던 데이터를 먼저 불러옵니다.
 let schedule = loadSchedule();
 
-// 캘린더 날짜 상태별 스티커 설정 (overdue/urgent/normal/none)
+// "개인" 카테고리 일정이 있는 날짜에 보여줄 스티커 선택값 (냠냠/사랑/감기 키티 중 하나)
 // 페이지가 열릴 때 브라우저에 저장되어 있던 설정을 먼저 불러옵니다.
-let calendarStickers = loadCalendarStickers();
+let personalSticker = loadPersonalSticker();
 
 // 화면 요소 가져오기
 const todoForm = document.getElementById("todo-form");
@@ -348,9 +360,11 @@ const calendarDetailTitleEl = document.getElementById("calendar-detail-title");
 const calendarDetailListEl = document.getElementById("calendar-detail-list");
 const calendarDetailEmptyStateEl = document.getElementById("calendar-detail-empty-state");
 
-// 캘린더 스티커 꾸미기 관련 화면 요소 가져오기
-const calendarStickerSelectEls = document.querySelectorAll(".calendar-sticker-select");
-const calendarStickerPreviewEls = document.querySelectorAll(".calendar-sticker-preview");
+// 캘린더 스티커 관련 화면 요소 가져오기
+// (마감 지남/임박/여유/없음 4가지 상태 스티커는 고정 미리보기이고, 개인 일정 스티커만 select로 선택 가능합니다)
+const calendarFixedStickerPreviewEls = document.querySelectorAll(".calendar-fixed-sticker-preview");
+const personalStickerSelectEl = document.getElementById("personal-sticker-select");
+const personalStickerPreviewEl = document.getElementById("personal-sticker-preview");
 
 // 현재 캘린더에 보여주고 있는 연/월 (0-indexed 월: 0=1월 ... 11=12월)
 const now = new Date();
@@ -719,17 +733,27 @@ function getEventsForDate(dateKey) {
 
 /**
  * 특정 날짜(dateKey)의 일정 상태를 계산해 캘린더 스티커에 사용할 상태 키를 반환합니다.
+ * - personal: 완료하지 않은 "개인" 카테고리 일정이 그 날짜에 하나라도 있는 경우
+ *             (마감 지남/임박 여부와 관계없이 항상 최우선으로 표시됩니다)
  * - overdue: 그 날짜에 마감일인 할 일 중 이미 지난(D+) 것이 있는 경우
  * - urgent: 마감이 임박(D-3 ~ D-Day)한 할 일이 있는 경우
  * - normal: 마감/근무 등 일정은 있지만 임박하거나 지난 것은 없는 경우
  * - none: 그 날짜에 아무 일정도 없는 경우
  * @param {string} dateKey YYYY-MM-DD 형식의 날짜 문자열
- * @returns {"overdue" | "urgent" | "normal" | "none"} 날짜 상태
+ * @returns {"personal" | "overdue" | "urgent" | "normal" | "none"} 날짜 상태
  */
 function getCalendarDateState(dateKey) {
   const events = getEventsForDate(dateKey);
   if (events.length === 0) {
     return "none";
+  }
+
+  // 완료하지 않은 "개인" 카테고리 일정이 있으면, 마감 상태와 무관하게 항상 개인 스티커를 우선 표시합니다.
+  const hasActivePersonalEvent = events.some(
+    ({ todo, isWorkday }) => !isWorkday && todo.category === "개인" && !todo.completed
+  );
+  if (hasActivePersonalEvent) {
+    return "personal";
   }
 
   let hasOverdue = false;
@@ -813,14 +837,17 @@ function renderCalendar() {
     dayNumberEl.textContent = String(day);
     dayCell.appendChild(dayNumberEl);
 
-    // 날짜 상태(마감 지남/임박/여유/없음)에 맞는 키티 스티커를 날짜 칸 오른쪽 위에 표시
+    // 날짜 상태에 맞는 키티 스티커를 날짜 칸 오른쪽 위에 표시합니다.
+    // - personal(완료하지 않은 개인 일정이 있는 날): 사용자가 고른 개인 스티커(냠냠/사랑/감기 키티)
+    // - overdue/urgent/normal/none: 고정 스티커(우울/울음/안경/잠자는 키티)
     const dateState = getCalendarDateState(dateKey);
-    const stickerSrc = getCalendarStickerSrc(calendarStickers[dateState]);
+    const stickerValue = dateState === "personal" ? personalSticker : FIXED_CALENDAR_STATE_STICKERS[dateState];
+    const stickerSrc = getCalendarStickerSrc(stickerValue);
     if (stickerSrc) {
       const stickerEl = document.createElement("img");
       stickerEl.className = "calendar-day-sticker";
       stickerEl.src = stickerSrc;
-      stickerEl.alt = calendarStickers[dateState];
+      stickerEl.alt = stickerValue;
       dayCell.appendChild(stickerEl);
     }
 
@@ -1213,46 +1240,49 @@ calendarNextBtn.addEventListener("click", () => {
 });
 
 /**
- * 캘린더 스티커 꾸미기 설정 영역(상태별 select + 미리보기 이미지)을 초기화하고,
- * 현재 저장된 스티커 설정값으로 화면을 채웁니다.
- * select의 옵션 목록은 CALENDAR_STICKER_OPTIONS를 기준으로 한 번만 만들고,
- * 선택값과 미리보기 이미지는 calendarStickers 상태에 맞춰 갱신합니다.
+ * 캘린더 스티커 설정 영역을 초기화하고 화면을 채웁니다.
+ * - 마감 지남/마감 임박/여유 있음/일정 없음 4가지 상태 스티커는 고정값이라 미리보기 이미지만 보여줍니다.
+ * - "개인" 일정 스티커(냠냠/사랑/감기 키티)만 select로 사용자가 직접 고를 수 있고,
+ *   선택값은 personalSticker 상태에 맞춰 갱신합니다.
  */
 function renderCalendarStickerSettings() {
-  calendarStickerSelectEls.forEach((selectEl) => {
-    const state = selectEl.dataset.state;
+  // 고정 상태 스티커 미리보기 (마감 지남/임박/여유/없음)
+  calendarFixedStickerPreviewEls.forEach((previewEl) => {
+    const state = previewEl.dataset.state;
+    const value = FIXED_CALENDAR_STATE_STICKERS[state];
+    previewEl.src = getCalendarStickerSrc(value);
+    previewEl.alt = value;
+  });
 
-    // select 옵션 목록이 비어있으면(최초 1회) 옵션을 채워 넣습니다.
-    if (selectEl.options.length === 0) {
-      CALENDAR_STICKER_OPTIONS.forEach((option) => {
+  // 개인 일정 스티커 select + 미리보기
+  if (personalStickerSelectEl) {
+    if (personalStickerSelectEl.options.length === 0) {
+      PERSONAL_STICKER_OPTIONS.forEach((option) => {
         const optionEl = document.createElement("option");
         optionEl.value = option.value;
         optionEl.textContent = option.label;
-        selectEl.appendChild(optionEl);
+        personalStickerSelectEl.appendChild(optionEl);
       });
     }
+    personalStickerSelectEl.value = personalSticker;
+  }
 
-    selectEl.value = calendarStickers[state];
-  });
-
-  calendarStickerPreviewEls.forEach((previewEl) => {
-    const state = previewEl.dataset.state;
-    previewEl.src = getCalendarStickerSrc(calendarStickers[state]);
-    previewEl.alt = calendarStickers[state];
-  });
+  if (personalStickerPreviewEl) {
+    personalStickerPreviewEl.src = getCalendarStickerSrc(personalSticker);
+    personalStickerPreviewEl.alt = personalSticker;
+  }
 }
 
-// 스티커 select에서 다른 표정을 고르면, 해당 상태의 스티커 설정을 바꾸고 저장한 뒤
+// 개인 일정 스티커 select에서 다른 표정을 고르면, 설정을 바꾸고 저장한 뒤
 // 미리보기와 캘린더 화면을 함께 다시 그립니다.
-calendarStickerSelectEls.forEach((selectEl) => {
-  selectEl.addEventListener("change", () => {
-    const state = selectEl.dataset.state;
-    calendarStickers = { ...calendarStickers, [state]: selectEl.value };
-    saveCalendarStickers();
+if (personalStickerSelectEl) {
+  personalStickerSelectEl.addEventListener("change", () => {
+    personalSticker = personalStickerSelectEl.value;
+    savePersonalSticker();
     renderCalendarStickerSettings();
     renderCalendar();
   });
-});
+}
 
 // ===== 메모 (T18) =====
 

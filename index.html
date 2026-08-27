@@ -8,13 +8,21 @@
 </head>
 <body>
   <div class="app">
+    <!-- Main Container 외곽을 꾸며주는 키티 스티커 모음 (클릭 등 동작에는 영향을 주지 않음) -->
+    <img class="app-exterior-sticker app-exterior-sticker-hello" src="css/안녕 키티.png" alt="안녕 키티" />
+    <img class="app-exterior-sticker app-exterior-sticker-face" src="css/카티얼굴.png" alt="카티 얼굴" />
+    <img class="app-exterior-sticker app-exterior-sticker-exclaim" src="css/! 키티.png" alt="느낌표 키티" />
+    <img class="app-exterior-sticker app-exterior-sticker-question" src="css/%3F 키티.png" alt="물음표 키티" />
+    <!-- Main Container 옆에서 살짝 고개를 내밀듯 배치하는 빼꼼 키티 -->
+    <img class="app-peeking-sticker" src="css/꾸미기/빼꼼키티.png" alt="빼꼼 키티" />
+
     <header class="app-header">
-      <img
-        class="app-header-logo-img"
-        src="css/헬로키티 로고.png"
-        alt="헬로키티 로고"
-      />
       <div class="app-header-title-row">
+        <img
+          class="app-header-logo-img"
+          src="css/헬로키티 로고.png"
+          alt="헬로키티 로고"
+        />
         <h1>Kitty Campus Planner</h1>
         <img
           class="app-header-kitty-img"
@@ -27,6 +35,8 @@
 
     <!-- 주간 시간표 영역 (T5: 요일 x 교시 그리드, 과목별 색상 구분) -->
     <section class="schedule-section">
+      <!-- 시간표 영역을 꾸며주는 키티헬로 말풍선 이미지 (우측 상단 장식) -->
+      <img class="schedule-section-decor-img" src="css/키티헬로.png" alt="키티헬로" />
       <h2 class="section-title">
         📅 주간 시간표
         <img class="section-title-icon-img" src="css/꾸미기/키티 리본.png" alt="키티 리본" />
@@ -100,6 +110,8 @@
 
     <!-- 월간 캘린더 뷰 영역 (T7: 마감일이 있는 학과/개인 할 일 + 아르바이트 근무 요일 표시) -->
     <section class="calendar-section">
+      <!-- 캘린더 영역을 꾸며주는 아이러브키티 이미지 (우측 상단 장식) -->
+      <img class="calendar-section-decor-img" src="css/아이러브키티.png" alt="아이러브키티" />
       <h2 class="section-title">
         🗓️ 월간 캘린더
         <img class="section-title-icon-img" src="css/꾸미기/키티 우유.png" alt="키티 우유" />
@@ -162,6 +174,8 @@
 
     <!-- 할 일 추가 영역 (T2: 제목 + 카테고리 + 중요도 + 마감일) -->
     <section class="add-todo-section">
+      <!-- 할 일 추가 영역을 꾸며주는 키티 얼굴 이미지 (우측 상단 장식) -->
+      <img class="add-todo-section-decor-img" src="css/꾸미기/키티 얼굴.png" alt="키티 얼굴" />
       <form id="todo-form" class="todo-form">
         <input
           type="text"
@@ -270,6 +284,9 @@
       <p id="empty-state" class="empty-state">
         아직 등록된 할 일이 없습니다. 위에서 할 일을 추가해 보세요!
       </p>
+
+      <!-- 할 일 목록 영역을 꾸며주는 키티곰돌이 이미지 (하단 장식) -->
+      <img class="todo-list-section-decor-img" src="css/꾸미기/키티곰돌이.png" alt="키티곰돌이" />
     </section>
   </div>
 

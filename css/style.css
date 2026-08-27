@@ -35,6 +35,7 @@ body {
 }
 
 .app {
+  position: relative;
   width: 100%;
   max-width: 640px;
   /* Main Container는 흰색 유지 */
@@ -44,19 +45,81 @@ body {
   padding: 28px 24px 32px;
 }
 
+/* ===== Main Container 외곽/옆을 꾸며주는 키티 스티커 ===== */
+/* Main Container(.app)를 기준으로 절대 위치시켜, 컨테이너 모서리 밖으로 살짝 걸치듯 배치합니다. */
+.app-exterior-sticker {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 1;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+}
+
+.app-exterior-sticker-hello {
+  top: -18px;
+  left: -18px;
+  transform: rotate(-12deg);
+}
+
+.app-exterior-sticker-face {
+  top: -20px;
+  right: -16px;
+  width: 60px;
+  height: 60px;
+  transform: rotate(10deg);
+}
+
+.app-exterior-sticker-exclaim {
+  bottom: -16px;
+  left: -14px;
+  width: 44px;
+  height: 44px;
+  transform: rotate(-8deg);
+}
+
+.app-exterior-sticker-question {
+  bottom: -16px;
+  right: -14px;
+  width: 44px;
+  height: 44px;
+  transform: rotate(8deg);
+}
+
+/* Main Container 옆에서 살짝 고개를 내밀듯 배치하는 빼꼼 키티 */
+.app-peeking-sticker {
+  position: absolute;
+  top: 50%;
+  right: -34px;
+  width: 68px;
+  height: 68px;
+  object-fit: contain;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 1;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+}
+
+/* 좁은 화면에서는 Main Container 밖으로 나가는 외곽 스티커/빼꼼 키티를 숨겨 레이아웃이 깨지지 않게 합니다. */
+@media (max-width: 720px) {
+  .app-exterior-sticker,
+  .app-peeking-sticker {
+    display: none;
+  }
+}
+
 /* ===== 헤더 ===== */
 .app-header {
   text-align: center;
   margin-bottom: 24px;
 }
 
-/* 프로그램 이름 위에 배치하는 헬로키티 로고 */
+/* 프로그램 이름(Kitty Campus Planner) 왼쪽에 배치하는 헬로키티 로고 */
 .app-header-logo-img {
-  display: block;
-  width: 64px;
-  height: 64px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
-  margin: 0 auto 8px;
 }
 
 .app-header-title-row {
@@ -105,7 +168,19 @@ body {
 
 /* ===== 주간 시간표 ===== */
 .schedule-section {
+  position: relative;
   margin-bottom: 20px;
+}
+
+/* 시간표 영역 우측 상단을 꾸며주는 키티헬로 말풍선 이미지 */
+.schedule-section-decor-img {
+  position: absolute;
+  top: -6px;
+  right: 0;
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 .schedule-form {
@@ -252,7 +327,19 @@ body {
 
 /* ===== 할 일 추가 폼 ===== */
 .add-todo-section {
+  position: relative;
   margin-bottom: 20px;
+}
+
+/* 할 일 추가 영역 우측 상단을 꾸며주는 키티 얼굴 이미지 */
+.add-todo-section-decor-img {
+  position: absolute;
+  top: -8px;
+  right: 0;
+  width: 40px;
+  height: 32px;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 .todo-form {
@@ -388,7 +475,19 @@ body {
 
 /* ===== 할 일 목록 ===== */
 .todo-list-section {
+  position: relative;
   min-height: 60px;
+  padding-bottom: 12px;
+}
+
+/* 할 일 목록 영역 하단 오른쪽을 꾸며주는 키티곰돌이 이미지 */
+.todo-list-section-decor-img {
+  display: block;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  margin: 10px 0 0 auto;
+  pointer-events: none;
 }
 
 .todo-list {
@@ -548,7 +647,19 @@ body {
 
 /* ===== 월간 캘린더 뷰 ===== */
 .calendar-section {
+  position: relative;
   margin-bottom: 20px;
+}
+
+/* 캘린더 영역 우측 상단을 꾸며주는 아이러브키티 이미지 */
+.calendar-section-decor-img {
+  position: absolute;
+  top: -10px;
+  right: 0;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 /* ===== 캘린더 스티커 꾸미기 설정 ===== */

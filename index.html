@@ -108,6 +108,83 @@
       </p>
     </section>
 
+    <!-- 키티 투두리스트 영역 (T23): "내 일정"과 "월간 캘린더" 사이에 배치.
+         투두리스트 키티 이미지 속 5개의 가로 줄 위에 실제 입력 가능한 텍스트 입력칸과
+         체크박스를 겹쳐서, 종이에 직접 적고 체크하는 것처럼 보이게 함.
+         기존 할 일 목록(todos)과는 완전히 별도의 간단한 5줄 메모형 투두이며,
+         내용/완료 상태는 localStorage에 자동 저장됨 -->
+    <section class="kitty-todo-section">
+      <h2 class="section-title">✅ 키티 투두리스트</h2>
+      <div class="kitty-todo-list">
+        <img class="kitty-todo-list-img" src="css/투두리스트 키티.png" alt="투두리스트 키티" />
+
+        <div class="kitty-todo-row" data-index="0">
+          <input
+            type="text"
+            class="kitty-todo-text-input"
+            placeholder="할 일을 입력하세요"
+            autocomplete="off"
+          />
+          <label class="kitty-todo-checkbox">
+            <input type="checkbox" class="kitty-todo-checkbox-input" />
+            <span class="kitty-todo-checkbox-box"></span>
+          </label>
+        </div>
+
+        <div class="kitty-todo-row" data-index="1">
+          <input
+            type="text"
+            class="kitty-todo-text-input"
+            placeholder="할 일을 입력하세요"
+            autocomplete="off"
+          />
+          <label class="kitty-todo-checkbox">
+            <input type="checkbox" class="kitty-todo-checkbox-input" />
+            <span class="kitty-todo-checkbox-box"></span>
+          </label>
+        </div>
+
+        <div class="kitty-todo-row" data-index="2">
+          <input
+            type="text"
+            class="kitty-todo-text-input"
+            placeholder="할 일을 입력하세요"
+            autocomplete="off"
+          />
+          <label class="kitty-todo-checkbox">
+            <input type="checkbox" class="kitty-todo-checkbox-input" />
+            <span class="kitty-todo-checkbox-box"></span>
+          </label>
+        </div>
+
+        <div class="kitty-todo-row" data-index="3">
+          <input
+            type="text"
+            class="kitty-todo-text-input"
+            placeholder="할 일을 입력하세요"
+            autocomplete="off"
+          />
+          <label class="kitty-todo-checkbox">
+            <input type="checkbox" class="kitty-todo-checkbox-input" />
+            <span class="kitty-todo-checkbox-box"></span>
+          </label>
+        </div>
+
+        <div class="kitty-todo-row" data-index="4">
+          <input
+            type="text"
+            class="kitty-todo-text-input"
+            placeholder="할 일을 입력하세요"
+            autocomplete="off"
+          />
+          <label class="kitty-todo-checkbox">
+            <input type="checkbox" class="kitty-todo-checkbox-input" />
+            <span class="kitty-todo-checkbox-box"></span>
+          </label>
+        </div>
+      </div>
+    </section>
+
     <!-- 월간 캘린더 뷰 영역 (T7: 마감일이 있는 학과/개인 할 일 + 아르바이트 근무 요일 표시) -->
     <section class="calendar-section">
       <!-- 캘린더 영역을 꾸며주는 아이러브키티 이미지 (우측 상단 장식) -->

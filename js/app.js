@@ -127,6 +127,14 @@
  *   47) 개인 일정에 시작 시간이 있으면 뱃지 라벨을 "마감일" 대신 "일정"으로 바꾸고
  *       "일정: 2025-01-10 15:00~17:00" 형태로 표시하기 (학과는 기존처럼 "마감일: ..." 유지).
  *       "🍎 내 일정" 요약 카드와 캘린더 상세 일정에도 동일하게 반영
+ *
+ * 이번 단계(T23)에서 추가한 내용:
+ *   48) "🍎 내 일정"과 "🗓️ 월간 캘린더" 사이에 "키티 투두리스트" 섹션을 새로 추가.
+ *       기존 할 일 목록(todos)과는 완전히 별도로, "투두리스트 키티" 이미지 속 5개의
+ *       가로 줄 위에 실제 입력 가능한 텍스트 입력칸과 커스텀 체크박스를 겹쳐서,
+ *       종이에 직접 적고 체크하는 것처럼 보이도록 구현
+ *   49) 각 줄의 텍스트/완료 상태를 localStorage(kitty-todo-list 키)에 자동 저장하고,
+ *       완료 체크 시 취소선 + 연한 회색으로 표시, 체크 해제 시 원래 상태로 복귀
  */
 
 // 할 일 카드에서 메모를 기본으로 보여줄 최대 글자 수 (이보다 길면 "더보기"로 축약)
@@ -159,6 +167,13 @@ const STORAGE_KEY = "smart-campus-planner-todos";
 
 // 메모(T18) 내용을 저장할 때 사용하는 브라우저 저장소 키
 const MEMO_STORAGE_KEY = "smart-campus-planner-memo";
+
+// 키티 투두리스트(T23) 내용을 저장할 때 사용하는 브라우저 저장소 키.
+// 기존 할 일 목록(todos)과는 완전히 별도의, 이미지 속 5개 줄에 대응하는 간단한 메모형 투두입니다.
+const KITTY_TODO_STORAGE_KEY = "smart-campus-planner-kitty-todo";
+
+// 키티 투두리스트는 항상 5개의 줄로 고정되어 있습니다 (이미지 속 가로줄 개수와 일치).
+const KITTY_TODO_ROW_COUNT = 5;
 
 // ===== 캘린더 스티커 (T12, T19에서 고정/개인 선택으로 개편) =====
 // "css/키티 표정" 폴더에 있는 키티 표정 이미지들을 캘린더 날짜 칸의 스티커로 사용합니다.
@@ -294,6 +309,57 @@ function saveMemo(memoText) {
   }
 }
 
+/**
+ * 브라우저 저장소(localStorage)에서 저장되어 있던 키티 투두리스트(T23) 내용을 불러옵니다.
+ * 저장된 데이터가 없거나 형식이 올바르지 않으면 5개 줄이 모두 빈 항목인 기본값을 반환합니다.
+ * 각 항목은 { text: string, completed: boolean } 형태이며, 항상 KITTY_TODO_ROW_COUNT(5)개를
+ * 보장해 이미지 속 줄 개수와 어긋나지 않도록 합니다.
+ * @returns {{text: string, completed: boolean}[]} 5개 줄의 투두 데이터
+ */
+function loadKittyTodoList() {
+  const emptyRows = Array.from({ length: KITTY_TODO_ROW_COUNT }, () => ({
+    text: "",
+    completed: false,
+  }));
+
+  try {
+    const raw = localStorage.getItem(KITTY_TODO_STORAGE_KEY);
+    if (!raw) {
+      return emptyRows;
+    }
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return emptyRows;
+    }
+    // 저장된 개수가 5개보다 적거나 많아도(과거 데이터 등) 항상 5개로 맞춰줍니다.
+    return emptyRows.map((defaultRow, index) => {
+      const item = parsed[index];
+      if (!item || typeof item !== "object") {
+        return defaultRow;
+      }
+      return {
+        text: typeof item.text === "string" ? item.text : "",
+        completed: item.completed === true,
+      };
+    });
+  } catch (error) {
+    console.warn("저장된 키티 투두리스트를 불러오는 중 문제가 발생하여 빈 목록으로 시작합니다.", error);
+    return emptyRows;
+  }
+}
+
+/**
+ * 현재 키티 투두리스트(T23) 내용을 브라우저 저장소(localStorage)에 저장합니다.
+ * @param {{text: string, completed: boolean}[]} rows 저장할 5개 줄의 투두 데이터
+ */
+function saveKittyTodoList(rows) {
+  try {
+    localStorage.setItem(KITTY_TODO_STORAGE_KEY, JSON.stringify(rows));
+  } catch (error) {
+    console.warn("키티 투두리스트를 저장하는 중 문제가 발생했습니다.", error);
+  }
+}
+
 // 할 일 목록을 담아두는 배열
 // 페이지가 열릴 때 브라우저에 저장되어 있던 데이터를 먼저 불러옵니다.
 let todos = loadTodos();
@@ -332,6 +398,9 @@ const progressBarFillEl = document.getElementById("progress-bar-fill");
 
 // 메모(T18) 관련 화면 요소 가져오기
 const memoInputEl = document.getElementById("memo-input");
+
+// 키티 투두리스트(T23) 관련 화면 요소 가져오기 (5개 행을 순서대로 담은 배열)
+const kittyTodoRowEls = document.querySelectorAll(".kitty-todo-row");
 
 // 시간표 관련 화면 요소 가져오기
 const scheduleForm = document.getElementById("schedule-form");
@@ -1484,6 +1553,69 @@ if (memoInputEl) {
     memoSaveTimerId = setTimeout(() => {
       saveMemo(memoInputEl.value);
     }, MEMO_SAVE_DEBOUNCE_MS);
+  });
+}
+
+// ===== 키티 투두리스트 (T23) =====
+// 기존 할 일 목록(todos)과는 완전히 별도로, 투두리스트 키티 이미지 속 5개 줄에
+// 대응하는 텍스트/완료 상태를 관리합니다. 텍스트 입력도 메모와 마찬가지로
+// 너무 자주 저장소에 접근하지 않도록 디바운스 후 저장합니다.
+let kittyTodoSaveTimerId = null;
+const KITTY_TODO_SAVE_DEBOUNCE_MS = 400;
+
+/**
+ * 현재 화면(kittyTodoRowEls)에 표시된 5개 행의 텍스트/완료 상태를 읽어
+ * 저장용 배열 형태로 만들어 반환합니다.
+ * @returns {{text: string, completed: boolean}[]} 5개 줄의 투두 데이터
+ */
+function collectKittyTodoListFromDom() {
+  return Array.from(kittyTodoRowEls).map((rowEl) => {
+    const textInput = rowEl.querySelector(".kitty-todo-text-input");
+    const checkboxInput = rowEl.querySelector(".kitty-todo-checkbox-input");
+    return {
+      text: textInput ? textInput.value : "",
+      completed: checkboxInput ? checkboxInput.checked : false,
+    };
+  });
+}
+
+if (kittyTodoRowEls.length > 0) {
+  // 페이지가 열릴 때 저장되어 있던 내용을 5개 행에 그대로 복원합니다.
+  const savedKittyTodoRows = loadKittyTodoList();
+
+  kittyTodoRowEls.forEach((rowEl, index) => {
+    const textInput = rowEl.querySelector(".kitty-todo-text-input");
+    const checkboxInput = rowEl.querySelector(".kitty-todo-checkbox-input");
+    const savedRow = savedKittyTodoRows[index] || { text: "", completed: false };
+
+    if (textInput) {
+      textInput.value = savedRow.text;
+    }
+    if (checkboxInput) {
+      checkboxInput.checked = savedRow.completed;
+    }
+    // 완료 상태에 따라 취소선 스타일이 바로 반영되도록 초기 상태도 함께 맞춰줍니다.
+    rowEl.classList.toggle("completed", savedRow.completed);
+
+    // 텍스트를 입력할 때마다 디바운스 후 자동 저장합니다.
+    if (textInput) {
+      textInput.addEventListener("input", () => {
+        if (kittyTodoSaveTimerId) {
+          clearTimeout(kittyTodoSaveTimerId);
+        }
+        kittyTodoSaveTimerId = setTimeout(() => {
+          saveKittyTodoList(collectKittyTodoListFromDom());
+        }, KITTY_TODO_SAVE_DEBOUNCE_MS);
+      });
+    }
+
+    // 체크박스는 클릭 즉시(디바운스 없이) 완료 상태를 반영하고 저장합니다.
+    if (checkboxInput) {
+      checkboxInput.addEventListener("change", () => {
+        rowEl.classList.toggle("completed", checkboxInput.checked);
+        saveKittyTodoList(collectKittyTodoListFromDom());
+      });
+    }
   });
 }
 

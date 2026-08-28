@@ -7,6 +7,14 @@
 
 > 키티와 일정 관리해서 갓생 살자 ♥
 
+### 🌐 바로 실행해보기
+
+[![Launch App](https://img.shields.io/badge/%F0%9F%8E%80_Kitty_Campus_Planner-바로_실행하기-e60039?style=for-the-badge)](https://yulimgim3-del.github.io/Smart-Campus-Planner/)
+
+설치나 회원가입 없이 위 배지(또는 아래 링크)를 클릭하면 바로 브라우저에서 앱을 사용할 수 있습니다.
+
+🔗 https://yulimgim3-del.github.io/Smart-Campus-Planner/
+
 ---
 
 ## 🎯 프로젝트를 만든 목적
